@@ -1,4 +1,4 @@
-lockfileVersion: '6.0'
+lockfileVersion: '6.1'
 
 settings:
   autoInstallPeers: true
@@ -12,7 +12,7 @@ dependencies:
     specifier: 20.0.2
     version: 20.0.2
   koa:
-    specifier: 2.13.4
+    specifier: ^2.13.4
     version: 2.13.4
   koa-router:
     specifier: 12.0.0

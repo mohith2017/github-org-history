@@ -26,6 +26,7 @@
         Align timeline
       </div>
     </div>
+    <!-- Main chart display -->
     <StarXYChart
       v-if="state.chartData"
       classname="w-full h-auto mt-4"
@@ -179,14 +180,17 @@ onMounted(() => {
   }
 });
 
+// When repo is added to store, this is triggered
 watch(
-  () => store.repos,
+  () => store.repoList,
   () => {
-    fetchReposData(store.repos);
+    fetchReposData(store.repoList);
   }
 );
 
+//Main function to convert repo Data to chart data
 const fetchReposData = async (repos: string[]) => {
+  console.log(repos);
   store.setIsFetching(true);
   const notCachedRepos: string[] = [];
 
@@ -198,6 +202,7 @@ const fetchReposData = async (repos: string[]) => {
     }
   }
 
+  console.log("Not cached repos: ", notCachedRepos);
   try {
     const data = await getRepoData(notCachedRepos, store.token);
     for (const { repo, starRecords, logoUrl } of data) {
@@ -228,7 +233,7 @@ const fetchReposData = async (repos: string[]) => {
       });
     }
   }
-
+  
   if (repoData.length === 0) {
     state.chartData = undefined;
   } else {

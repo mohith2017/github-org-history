@@ -29,9 +29,11 @@
             ? '...add next repository'
             : 'star-history or star-history/star-history or https://github.com/star-history/star-history'
         "
-        @paste="handleInputerPasted"
+        
         @keydown="handleInputerKeyDown"
       />
+      <!-- @paste="handleInputerPasted" -->
+      <!-- View star history button -->
       <button
         class="h-9 pl-4 pr-4 whitespace-nowrap w-auto text-dark border-l border-dark hover:bg-dark hover:text-light"
         :class="isFetching ? 'cursor-wait' : ''"
@@ -58,6 +60,7 @@
             <span class="w-3 rotate-45 h-px bg-black absolute top-1/2"></span>
             <span class="w-3 -rotate-45 h-px bg-black absolute top-1/2"></span>
           </span>
+          <!-- Item name - nixtla/nixtla -->
           <span
             class="mr-1 cursor-pointer hover:line-through select-none"
             :class="item.visible ? '' : 'line-through text-gray-400'"
@@ -65,6 +68,7 @@
           >
             {{ item.name }}
           </span>
+          <!-- Small arrow next to repo name -->
           <a :href="`https://github.com/${item.name}`" target="_blank">
             <i
               class="fas fa-external-link-alt fa-sm text-gray-400 hover:text-green-600"
@@ -88,6 +92,7 @@ import { head } from "lodash";
 import { GITHUB_REPO_URL_REG } from "../helpers/consts";
 import toast from "../helpers/toast";
 import useAppStore from "../store";
+import api from "../../common/api";
 
 interface State {
   repo: string;
@@ -145,7 +150,8 @@ watch(
   }
 );
 
-const handleAddRepoBtnClick = () => {
+const handleAddRepoBtnClick = async () => {
+  console.log("Came here");
   if (store.isFetching) {
     return;
   }
@@ -160,7 +166,7 @@ const handleAddRepoBtnClick = () => {
     return;
   }
 
-  for (const rawRepo of rawRepos.split(",")) {
+  for (const rawRepo of rawRepos.replace(/\s/g, "").split(",")) {
     let repo = "";
 
     // Match repo name from github repo links. e.g. https://github.com/star-history/star-history/issues -> star-history/star-history
@@ -171,6 +177,12 @@ const handleAddRepoBtnClick = () => {
     if (repo === "") {
       continue;
     }
+
+    console.log("Org initial value: ", repo);
+    let repoNames = await api.getOrgRepos(repo);
+    repoNames = repoNames.map(item => `${repo}/${item}`)
+    console.log("Repo Names: ", repoNames);
+    
 
     if (GITHUB_REPO_URL_REG.test(repo)) {
       const regResult = GITHUB_REPO_URL_REG.exec(repo);
@@ -188,6 +200,7 @@ const handleAddRepoBtnClick = () => {
       repo = `${valueList[0]}/${valueList[1]}`;
     }
 
+
     for (const r of state.repos) {
       if (r.name === repo) {
         if (r.visible) {
@@ -202,6 +215,9 @@ const handleAddRepoBtnClick = () => {
         return;
       }
     }
+
+    console.log("Repo name ready to be pushed: ", repo);
+
     state.repos.push({
       name: repo,
       visible: true,

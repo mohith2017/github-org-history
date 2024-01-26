@@ -70,6 +70,7 @@ export const getReposStarData = async (
   });
 };
 
+
 export const getRepoData = async (
   repos: string[],
   token = "",
@@ -93,6 +94,7 @@ export const getRepoData = async (
         token,
         maxRequestAmount
       );
+      console.log("Star record data for ", repo, ": ", starRecords);
       const logo = await api.getRepoLogoUrl(repo, token);
       repoDataCacheMap.set(repo, { star: starRecords, logo });
     } catch (error: any) {
@@ -209,7 +211,7 @@ export const convertStarDataToChartData = (
     };
   }
 };
-
+// Main data to chart data function
 export const convertDataToChartData = (
   repoData: RepoData[],
   chartMode: ChartMode

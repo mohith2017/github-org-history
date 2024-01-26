@@ -9,6 +9,7 @@ interface AppState {
   token: string;
   repos: string[];
   chartMode: ChartMode;
+  repoList: string[];
 }
 
 const useAppStore = defineStore("appStore", {
@@ -17,6 +18,7 @@ const useAppStore = defineStore("appStore", {
     const hash = window.location.hash.slice(1);
     const params = hash.split("&").filter((i) => Boolean(i));
     const repos: string[] = [];
+    const repoList: string[] = [];
     let chartMode: ChartMode = "Date";
 
     for (const value of params) {
@@ -33,15 +35,17 @@ const useAppStore = defineStore("appStore", {
       isFetching: false,
       token: accessTokenCache || "",
       repos: repos,
+      repoList: repoList,
       chartMode: chartMode,
     };
   },
   actions: {
     addRepo(repo: string) {
       if (!this.repos.includes(repo)) {
-        this.repos.push(repo);
+      this.repos.push(repo);
       }
       this.repos = [...this.repos];
+      // this.repoList = repo;
     },
     delRepo(repo: string) {
       if (this.repos.includes(repo)) {

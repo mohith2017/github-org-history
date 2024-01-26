@@ -4,12 +4,34 @@ import utils from "./utils";
 const DEFAULT_PER_PAGE = 30;
 
 namespace api {
+  export async function getOrgRepos(
+    org: string
+  ): Promise<string[]> {
+    let repoNames: string[];
+    let url = `https://api.github.com/orgs/${org}/repos`;
+    console.log("URL for fetching repos: ", url);
+    
+
+    try {
+      const response = await axios.get(url);
+      const data = response.data;
+      repoNames = data.map((repo: any) => repo.name);
+      console.log(repoNames);
+   } catch (error) {
+      console.log(`Failed to fetch repos: ${error}`);
+      return [];
+   }
+
+    return repoNames;
+  }
+
   export async function getRepoStargazers(
     repo: string,
     token?: string,
     page?: number
   ) {
     let url = `https://api.github.com/repos/${repo}/stargazers?per_page=${DEFAULT_PER_PAGE}`;
+    console.log("URL for stars: ", url);
 
     if (page !== undefined) {
       url = `${url}&page=${page}`;
