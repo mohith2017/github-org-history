@@ -27,12 +27,14 @@
       </div>
     </div>
     <!-- Main chart display -->
+    <div class="mt-8" style="width: 100%; height: 300vh;">
     <StarXYChart
       v-if="state.chartData"
-      classname="w-full h-auto mt-4"
+      classname="w-full h-screen mt-4"
       :data="state.chartData"
       :chart-mode="chartMode"
     />
+    </div>
   </div>
   <div
     v-if="state.chartData"
@@ -138,8 +140,9 @@ import EmbedChartGuideDialog from "./EmbedChartGuideDialog.vue";
 interface State {
   chartMode: "Date" | "Timeline";
   repoCacheMap: Map<
-    string,
+   string,
     {
+      key: string,
       starData: {
         date: string;
         count: number;
@@ -190,27 +193,35 @@ watch(
 
 //Main function to convert repo Data to chart data
 const fetchReposData = async (repos: string[]) => {
+  state.repoCacheMap.clear();
   console.log(repos);
   store.setIsFetching(true);
   const notCachedRepos: string[] = [];
+  let data: any;
 
-  for (const repo of repos) {
-    const cachedRepo = state.repoCacheMap.get(repo);
+  // for (const repo of repos) {
+  //   const cachedRepo = state.repoCacheMap.get(repo);
 
-    if (!cachedRepo) {
-      notCachedRepos.push(repo);
-    }
-  }
+  //   if (!cachedRepo) {
+  //     notCachedRepos.push(repo);
+  //   }
+  // }
 
-  console.log("Not cached repos: ", notCachedRepos);
+  // console.log("Not cached repos: ", notCachedRepos);
   try {
-    const data = await getRepoData(notCachedRepos, store.token);
-    for (const { repo, starRecords, logoUrl } of data) {
-      state.repoCacheMap.set(repo, {
-        starData: starRecords,
-        logoUrl,
-      });
-    }
+    data = await getRepoData(repos, store.token);
+    console.log("Data: ", data);
+    // for (const { repo, starRecords, logoUrl } of data) {
+    //   console.log("Repo name: ", repo, " has ", starRecords);
+    
+
+    state.repoCacheMap.set( data[0]["repo"], {
+      key: data[0]["repo"],
+      starData: data[0]["starRecords"],
+      logoUrl: data[0]["logoUrl"],
+    });
+    // }
+    console.log("Repo Cache map: ", state.repoCacheMap);
   } catch (error: any) {
     toast.warn(error.message);
 
@@ -220,25 +231,35 @@ const fetchReposData = async (repos: string[]) => {
       store.delRepo(error.repo);
     }
   }
-  store.setIsFetching(false);
-
-  const repoData: RepoData[] = [];
-  for (const repo of repos) {
-    const cachedRepo = state.repoCacheMap.get(repo);
-    if (cachedRepo) {
-      repoData.push({
-        repo,
-        starRecords: cachedRepo.starData,
-        logoUrl: cachedRepo.logoUrl,
-      });
-    }
-  }
   
-  if (repoData.length === 0) {
+
+  let repoData: RepoData[] = [];
+ 
+  // for (const repo of repos) {
+    // console.log("Key for the map:", );
+    // console.log("Manually retrieving: ", state.repoCacheMap.get(data[0]["repo"]));
+    const cachedRepo = state.repoCacheMap.get(data[0]["repo"]);
+    console.log(cachedRepo);
+    if (cachedRepo) {
+      console.log("Came in cachedrepo loop");
+      repoData = [ 
+      {
+        repo: cachedRepo.key,
+        starRecords: cachedRepo.starData,
+        logoUrl: cachedRepo.logoUrl
+      }];
+    }
+  // }
+  console.log("Final repo data for charting: ", repoData);
+  
+  if (!repoData) {
     state.chartData = undefined;
   } else {
+
     state.chartData = convertDataToChartData(repoData, chartMode.value);
+
   }
+  store.setIsFetching(false);
 };
 
 const handleCopyLinkBtnClick = async () => {

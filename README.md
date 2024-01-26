@@ -1,134 +1,75 @@
-<div align="center">
+# Open Source Tracker 🚀
 
-🧩 [**Also available as a Chrome extension**](https://chrome.google.com/webstore/detail/star-history/iijibbcdddbhokfepbblglfgdglnccfn)
+> A platform for tracking and predicting the future trends of open-source projects using TimeGPT. This is part of Nixtla's technical assessment for Full Stack Developer candidates.
 
-# :sparkles: Star History :sparkles:
+## Technical Project for the Full Stack Developer Role
 
-[**star-history.com**](https://star-history.com), **the missing GitHub star history graph of GitHub repos.**
+### Welcome! 👋
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=star-history/star-history&type=Date&theme=dark" />
-  <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=star-history/star-history&type=Date" />
-  <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=star-history/star-history&type=Date" />
-</picture>
+We are excited to have you participate in this technical project, designed to assess your ability to deploy a comprehensive application, simulating a real-world working scenario with us. Your primary task is to develop a Website that enables open-source companies to monitor their traction. It's similar to [star-history](https://star-history.com/), but with additional features. This project will be open-sourced, and you'll receive public recognition for your contribution.
 
-👆 **THIS** is a **`live`** chart created with the following html: 👇
+### Your Challenge 🏆
 
-<div align="left">
+Your task is to create a Website (dashboard) that tracks the performance of open-source projects, specifically focusing on the history of GitHub stars and Python package download statistics. This platform should enable users to:
 
-```html
-<picture>
-  <source
-    media="(prefers-color-scheme: dark)"
-    srcset="
-      https://api.star-history.com/svg?repos=star-history/star-history&type=Date&theme=dark
-    "
-  />
-  <source
-    media="(prefers-color-scheme: light)"
-    srcset="
-      https://api.star-history.com/svg?repos=star-history/star-history&type=Date
-    "
-  />
-  <img
-    alt="Star History Chart"
-    src="https://api.star-history.com/svg?repos=star-history/star-history&type=Date"
-  />
-</picture>
-```
+1. **Add Entire GitHub Organizations:** Unlike the example website, which focuses only on individual repositories, your platform should display the cumulative star history for all repositories within a GitHub organization. For instance, to view the star history of the entire [Nixtla](https://github.com/Nixtla) organization, one should be able to input its URL directly, rather than adding each repository individually.
 
-</div>
+2. **Include Multiple Organizations/Repositories:** Users should be able to compare the star history of multiple organizations and repositories on a single dashboard, unlike the example website that limits comparison to individual repositories.
 
-</div>
+3. **Show Historical Download Stats:** The dashboard should also display historical download statistics for Python packages associated with the selected repositories or organizations, linking to sources like [pepy.tech](https://pepy.tech/). If a GitHub repository and its corresponding Python package have different names, the platform should appropriately indicate an error.
 
----
+4. **Forecast Future Trends:** Incorporate our company’s forecasting API, TimeGPT, to predict future trends in star history and download statistics. Your dashboard should present both historical data and future forecasts generated using [our API](https://docs.nixtla.io/).
 
-## 💜 Sponsors
+Consider adding features like growth rates for enhanced functionality.
 
-### Bytebase
+### Time Frame ⏳
 
-[Bytebase](https://bytebase.com?source=star-history) is an open source, web-based database schema change and version control tool for teams. Supporting MySQL, PostgreSQL, Oracle, MongoDB, Redis, Snowflake, ClickHouse, TiDB, Google Spanner.
+You have one week from the date of receiving this test to complete and submit your project. Your one-week period starts upon receiving access to the repository.
 
-<a href="https://bytebase.com?source=star-history"><img src="https://raw.githubusercontent.com/star-history/star-history/main/public/sponsors/bytebase/landing.webp" /></a>
+### This is a Work Simulation, Not Just a Test
 
-### Dify
+Throughout the week, feel free to ask us questions and schedule meetings as needed. This exercise aims to understand how you'll integrate into our workflow. You'll also get a sense of our working style.
 
-[Dify](https://dify.ai/?utm_source=star-history) is an open source LLMOps platform that helps developers build AI applications more simply and quickly. Its core idea is to define various aspects of AI applications, including Prompts, Contexts, and Plugins, through declarative YAML files.
+### Technology Preferences 💡
 
-<a href="https://dify.ai/?utm_source=star-history"><img src="https://raw.githubusercontent.com/star-history/star-history/main/public/sponsors/dify/landing.webp" /></a>
+- **Technology Agnostic:** You may use any technology stack for coding and deployment. We have previously used TypeScript, JavaScript, and Vercel for similar applications.
+- **Deployment Requirement:** Ensure the deployed webpage is publicly accessible. If you choose a paid service, we'll cover the costs.
 
-### AutoMQ
+### What We Are Looking For 🔍
 
-[AutoMQ](https://github.com/AutoMQ/automq-for-kafka?utm_source=star-history) is a truly serverless Kafka solution that maximizes the benefits of cloud.
+- **Solution-Oriented Focus:** Create something engaging and useful.
+- **Code Quality:** Your code should be clean, well-documented, and maintainable.
+- **Design Thinking:** Aim for an efficient, user-centric design.
+- **Problem-Solving Skills:** Show us how you tackle unexpected challenges.
+- **Creativity:** We value innovative ideas and approaches!
 
-<a href="https://github.com/AutoMQ/automq-for-kafka?utm_source=star-history"><img src="https://raw.githubusercontent.com/star-history/star-history/main/public/sponsors/automq/landing.webp" /></a>
+### How to Proceed 🛠️
 
-### Akuity
+1. **Create Your Own Branch:** Start by cloning this repository and working on your branch.
 
-[Akuity](https://hubs.li/Q02fpVR30) A legit and balanced comparison of top two GitOps tools. Choose Argo CD today for a better DevOps experience.
+2. **Readme File:** Document your methodology, technologies used, and instructions for running the application in the README file.
 
-<a href="https://hubs.li/Q02fpVR30"><img src="https://raw.githubusercontent.com/star-history/star-history/main/public/sponsors/akuity/landing.webp" /></a>
+3. **Submit Your Work:** Complete your project and submit a pull request to the main branch.
 
-## ✨ Features
+### Open Source Contribution 🌐
 
-- **Unique** **`sketch xkcd`** feeling **chart**;
-- **One-click** generation of **high-quality** image for chart;
-- Support **multiple chart view** mode **`based on date or timeline`**;
-- **Embed** the **real-time chart** into **`GitHub readme or other websites`** **(like the one we embed here on the top)**
-- And **various** useful **functions**:
-  - toggle **repo visibility**;
-  - **shortcut** to input repo;
-  - **share** on **`Twitter`** **quickly**;
-  - **support** input **multiple repos**;
-  - ...waiting **for you** to **find out!**
+This technical test offers an opportunity to contribute to the open-source community:
 
-## 🌠 Screenshots
+- **Choice to Share:** You may choose to open-source the code developed during this test, making your work available for public use, modification, and distribution.
+- **No Impact on Hiring Decision:** Your decision to open-source your project will not influence our evaluation of your performance or our hiring decision.
 
-<a href="https://star-history.com"><img width="800px" src="https://user-images.githubusercontent.com/24653555/154391264-312b448b-f851-41bf-bb8d-4c21ec6795b6.gif" />
-</a>
+The choice to open-source your project is entirely yours, and we respect and support whatever decision you make.
 
-### 🧩 [Free chrome extension](https://chrome.google.com/webstore/detail/star-history/iijibbcdddbhokfepbblglfgdglnccfn)
+### Support 🤝
 
-<a href="https://chrome.google.com/webstore/detail/star-history/iijibbcdddbhokfepbblglfgdglnccfn"><img width="800px" src="https://user-images.githubusercontent.com/24653555/154391326-61b65d8f-3f9f-4432-b773-5988be75b0ea.png" /></a>
+- **Questions:** For any queries or clarifications, feel free to open an issue in the repository.
+- **Feedback:** We are here to support you and will provide constructive feedback on your submission.
 
-## 🏗 Development
+### Remember 🌟
 
-**`Star-history`** is built using a **modern tech stack**: **`Vue`** + **`Vite`** + **`TailwindCSS`**.
+- This test is about demonstrating your skills, creativity, and problem-solving approach.
+- We value your effort and time. Feel free to include any additional skills or functionalities you believe would be beneficial.
+- This is a safe and encouraging environment. Embrace this opportunity to showcase your abilities!
 
-### Prerequisites
+Good luck! We can't wait to see what you create! 🚀🎉
 
-- [Node.js](https://nodejs.org/en/download/)
-- [pnpm](https://pnpm.io/)
-
-### Install dependencies
-
-```shell
-pnpm i
-```
-
-### Start with your interest
-
-- **Main website** is the homepage of star-history with most of **useful features and blogs** about **`open source`**.
-
-  ```shell
-  pnpm dev
-  ```
-
-  The website will be served at http://localhost:3000.
-
-- **Chrome extension** supports the **basic chart viewer** as a **free** additional product.
-
-  ```shell
-  pnpm build:ext
-  ```
-
-  Load the built `./dist` folder as **unpacked project** to chrome extensions page.
-
-- **API server** is an **`experimental feature`**. It's mainly used to **generate chart `SVG`** image file that can be embeded into **`GitHub readme`**.
-
-  ```shell
-  cd server
-  pnpm i && pnpm dev
-  ```
-
-  The API server will be running on http://localhost:8080.

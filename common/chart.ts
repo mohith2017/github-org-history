@@ -112,7 +112,7 @@ export const getRepoData = async (
         status = 401;
       } else if (Array.isArray(error?.data) && error.data?.length === 0) {
         message = `Repo ${repo} has no star history`;
-        status = 501;
+        continue;
       } else {
         message = "Some unexpected error happened, try again later";
       }
@@ -143,10 +143,11 @@ export const getRepoData = async (
     }
   }
 
-  const reposStarData: RepoData[] = [];
+  let reposStarData: RepoData[] = [];
   for (const repo of repos) {
     const records = repoDataCacheMap.get(repo);
     if (records) {
+      console.log("Records exist");
       reposStarData.push({
         repo,
         starRecords: records.star,
@@ -154,6 +155,51 @@ export const getRepoData = async (
       });
     }
   }
+
+  // Step 1: Flatten the array
+  let flatArray = reposStarData.flatMap(repo => 
+    repo.starRecords.map(record => ({date: record.date, count: record.count}))
+  );
+  console.log("Flat array: ", flatArray);
+  
+  // Step 2: Sort the array by date
+  flatArray.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  console.log("Sorted Flat array: ", flatArray);
+  
+  // Step 3: Group the array by date
+  let groupedByDate = flatArray.reduce((acc, cur) => {
+    let date = cur.date;
+    if (!acc[date]) {
+      acc[date] = [];
+    }
+    acc[date].push(cur);
+    return acc;
+  }, {} as Record<string, typeof flatArray>);
+  console.log("Array grouped by date: ", groupedByDate);
+  
+  // Step 4: Sum the counts for each group
+  let summedCounts = Object.entries(groupedByDate).map(([date, records]) => {
+    let totalCount = records.reduce((sum, record) => sum + record.count, 0);
+    return {date, count: totalCount};
+  });
+  
+
+  // Needs updating to dynamic logo URL and repo
+  console.log("Summed counts of stars: ", summedCounts);
+  reposStarData = [{
+    logoUrl: 'https://avatars.githubusercontent.com/u/79945230?v=4',
+    repo: 'nixtla', 
+    starRecords: summedCounts, 
+  }];
+
+
+  console.log("repoStarData: ", reposStarData);
+  console.log("Return data for repoStarData: ", reposStarData.sort((d1, d2) => {
+    return (
+      Math.max(...d2.starRecords.map((s) => s.count)) -
+      Math.max(...d1.starRecords.map((s) => s.count))
+    );
+  }));
 
   return reposStarData.sort((d1, d2) => {
     return (
