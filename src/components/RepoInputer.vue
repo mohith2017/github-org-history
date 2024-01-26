@@ -222,7 +222,7 @@ const handleAddRepoBtnClick = async () => {
       name: repo,
       visible: true,
     });
-    store.addRepo(repo);
+    store.addRepo(repoNames);
   }
   state.repo = "";
 };

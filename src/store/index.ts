@@ -40,12 +40,12 @@ const useAppStore = defineStore("appStore", {
     };
   },
   actions: {
-    addRepo(repo: string) {
-      if (!this.repos.includes(repo)) {
-      this.repos.push(repo);
-      }
-      this.repos = [...this.repos];
-      // this.repoList = repo;
+    addRepo(repo: string[]) {
+      // if (!this.repos.includes(repo)) {
+      // this.repos.push(repo);
+      // }
+      // this.repos = [...this.repos];
+      this.repoList = repo;
     },
     delRepo(repo: string) {
       if (this.repos.includes(repo)) {
