@@ -7,7 +7,7 @@ export const piniaInstance = createPinia();
 interface AppState {
   isFetching: boolean;
   token: string;
-  repos: string[];
+  org: string[];
   chartMode: ChartMode;
   repoList: string[];
 }
@@ -17,7 +17,7 @@ const useAppStore = defineStore("appStore", {
     const { accessTokenCache } = storage.get(["accessTokenCache"]);
     const hash = window.location.hash.slice(1);
     const params = hash.split("&").filter((i) => Boolean(i));
-    const repos: string[] = [];
+    const org: string[] = [];
     const repoList: string[] = [];
     let chartMode: ChartMode = "Date";
 
@@ -26,35 +26,35 @@ const useAppStore = defineStore("appStore", {
         chartMode = value;
         continue;
       }
-      if (!repos.includes(value)) {
-        repos.push(value);
+      if (!org.includes(value)) {
+        org.push(value);
       }
     }
 
     return {
       isFetching: false,
       token: accessTokenCache || "",
-      repos: repos,
+      org: org,
       repoList: repoList,
       chartMode: chartMode,
     };
   },
   actions: {
-    addRepo(repo: string[]) {
-      // if (!this.repos.includes(repo)) {
-      // this.repos.push(repo);
-      // }
-      // this.repos = [...this.repos];
-      this.repoList = repo;
-    },
-    delRepo(repo: string) {
-      if (this.repos.includes(repo)) {
-        this.repos.splice(this.repos.indexOf(repo), 1);
+    addOrg(orgInput: string) {
+      if (!this.org.includes(orgInput)) {
+      this.org.push(orgInput);
       }
-      this.repos = [...this.repos];
+      this.org = [...this.org];
+      // this.repoList = orgInput;
     },
-    setRepos(repos: string[]) {
-      this.repos = repos;
+    delOrg(orgInput: string) {
+      if (this.org.includes(orgInput)) {
+        this.org.splice(this.org.indexOf(orgInput), 1);
+      }
+      this.org = [...this.org];
+    },
+    setOrg(orgInput: string[]) {
+      this.org = orgInput;
     },
     setToken(token: string) {
       this.token = token;

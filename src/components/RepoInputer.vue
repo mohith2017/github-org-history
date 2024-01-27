@@ -124,7 +124,7 @@ onMounted(async () => {
       break;
     }
   }
-  state.repos = store.repos.map((r) => {
+  state.repos = store.org.map((r) => {
     return {
       name: r,
       visible: true,
@@ -133,17 +133,17 @@ onMounted(async () => {
 });
 
 watch(
-  () => [store.repos, store.chartMode],
+  () => [store.org, store.chartMode],
   () => {
     for (const r of state.repos) {
-      if (r.visible && !store.repos.includes(r.name)) {
+      if (r.visible && !store.org.includes(r.name)) {
         state.repos.splice(state.repos.indexOf(r), 1);
       }
     }
 
     let hash = "";
-    if (store.repos.length > 0) {
-      hash = `#${store.repos.join("&")}&${store.chartMode}`;
+    if (store.org.length > 0) {
+      hash = `#${store.org.join("&")}&${store.chartMode}`;
     }
     // Sync location hash only right here
     window.location.hash = hash;
@@ -157,7 +157,7 @@ const handleAddRepoBtnClick = async () => {
   }
 
   let rawRepos = state.repo;
-  if (rawRepos === "" && store.repos.length === 0) {
+  if (rawRepos === "" && store.org.length === 0) {
     rawRepos = "star-history/star-history";
   }
 
@@ -178,10 +178,7 @@ const handleAddRepoBtnClick = async () => {
       continue;
     }
 
-    console.log("Org initial value: ", repo);
-    let repoNames = await api.getOrgRepos(repo);
-    repoNames = repoNames.map(item => `${repo}/${item}`)
-    console.log("Repo Names: ", repoNames);
+    
     
 
     if (GITHUB_REPO_URL_REG.test(repo)) {
@@ -191,14 +188,16 @@ const handleAddRepoBtnClick = async () => {
       }
     }
 
-    const valueList = repo.split("/");
-    if (valueList.length === 1) {
-      // Auto-complete repo name. e.g. bytebase -> bytebase/bytebase
-      repo = `${valueList[0]}/${repo}`;
-    } else if (valueList.length >= 2) {
-      // Remove additional chars. e.g. bytebase/bytebase/123 -> bytebase/bytebase
-      repo = `${valueList[0]}/${valueList[1]}`;
-    }
+    console.log("repo name to be displayed: ", repo);
+
+    // const valueList = repo.split("/");
+    // if (valueList.length === 1) {
+    //   // Auto-complete repo name. e.g. bytebase -> bytebase/bytebase
+    //   repo = `${valueList[0]}/${repo}`;
+    // } else if (valueList.length >= 2) {
+    //   // Remove additional chars. e.g. bytebase/bytebase/123 -> bytebase/bytebase
+    //   repo = `${valueList[0]}/${valueList[1]}`;
+    // }
 
 
     for (const r of state.repos) {
@@ -207,7 +206,7 @@ const handleAddRepoBtnClick = async () => {
           toast.warn(`Repo ${repo} is already on the chart`);
         } else {
           r.visible = true;
-          store.setRepos(
+          store.setOrg(
             state.repos.filter((r) => r.visible).map((r) => r.name)
           );
         }
@@ -222,7 +221,7 @@ const handleAddRepoBtnClick = async () => {
       name: repo,
       visible: true,
     });
-    store.addRepo(repoNames);
+    store.addOrg(repo);
   }
   state.repo = "";
 };
@@ -234,7 +233,7 @@ const handleToggleRepoItemVisible = (repo: string) => {
       break;
     }
   }
-  store.setRepos(state.repos.filter((r) => r.visible).map((r) => r.name));
+  store.setOrg(state.repos.filter((r) => r.visible).map((r) => r.name));
 };
 
 const handleDeleteRepoBtnClick = (repo: string) => {
@@ -244,12 +243,12 @@ const handleDeleteRepoBtnClick = (repo: string) => {
       break;
     }
   }
-  store.delRepo(repo);
+  store.delOrg(repo);
 };
 
 const handleClearAllRepoBtnClick = () => {
   state.repos = [];
-  store.setRepos([]);
+  store.setOrg([]);
 };
 
 const handleInputerPasted = async (event: ClipboardEvent) => {

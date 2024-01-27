@@ -79,6 +79,7 @@ export const getRepoData = async (
   const repoDataCacheMap: Map<
     string,
     {
+      orgName: string;
       star: {
         date: string;
         count: number;
@@ -87,16 +88,34 @@ export const getRepoData = async (
     }
   > = new Map();
 
+  console.log("Repos input value: ", repos);
+  let reposStarData: RepoData[] = [];
+
+
+
   for (const repo of repos) {
+    //Org repo names
+    console.log("Org initial value: ", repo);
+    let repoNames = await api.getOrgRepos(repo);
+    repoNames = repoNames.map(item => `${repo}/${item}`)
+    console.log("Repo Names: ", repoNames);
+
+    
+    for(const subrepo of repoNames){
+    
+  
     try {
       const starRecords = await api.getRepoStarRecords(
-        repo,
+        subrepo,
         token,
         maxRequestAmount
       );
-      console.log("Star record data for ", repo, ": ", starRecords);
-      const logo = await api.getRepoLogoUrl(repo, token);
-      repoDataCacheMap.set(repo, { star: starRecords, logo });
+      console.log("Star record data for ", subrepo, ": ", starRecords);
+      const logo = await api.getRepoLogoUrl(subrepo, token);
+      reposStarData.push({repo: subrepo, logoUrl: logo, starRecords: starRecords});
+      
+      
+      
     } catch (error: any) {
       let message = "";
       let status = 500;
@@ -141,20 +160,9 @@ export const getRepoData = async (
         repo,
       });
     }
-  }
+   }
 
-  let reposStarData: RepoData[] = [];
-  for (const repo of repos) {
-    const records = repoDataCacheMap.get(repo);
-    if (records) {
-      console.log("Records exist");
-      reposStarData.push({
-        repo,
-        starRecords: records.star,
-        logoUrl: records.logo,
-      });
-    }
-  }
+   console.log("Repo star data: " , reposStarData);
 
   // Step 1: Flatten the array
   let flatArray = reposStarData.flatMap(repo => 
@@ -182,26 +190,48 @@ export const getRepoData = async (
     let totalCount = records.reduce((sum, record) => sum + record.count, 0);
     return {date, count: totalCount};
   });
+
+  repoDataCacheMap.set(repo, { orgName: repo, star: summedCounts, logo: reposStarData[0]["logoUrl"] });
+
   
 
-  // Needs updating to dynamic logo URL and repo
-  console.log("Summed counts of stars: ", summedCounts);
-  reposStarData = [{
-    logoUrl: 'https://avatars.githubusercontent.com/u/79945230?v=4',
-    repo: 'nixtla', 
-    starRecords: summedCounts, 
-  }];
+  }
+
+  let finalreposStarData: RepoData[] = [];
+  for (const repo of repos) {
+    const records = repoDataCacheMap.get(repo);
+    if (records) {
+      console.log("Records exist");
+      finalreposStarData.push({
+        repo,
+        starRecords: records.star,
+        logoUrl: records.logo,
+      });
+    }
+  }
+
+ 
+  
+
+  // console.log("repoStarData before changing: ", reposStarData[0]);
+  // // Needs updating to dynamic logo URL and repo
+  // console.log("Summed counts of stars: ", summedCounts);
+  // reposStarData.push({
+  //   logoUrl: reposStarData[0]['logoUrl'],
+  //   repo: reposStarData[0]['repo'].split('/')[0], 
+  //   starRecords: summedCounts, 
+  // });
 
 
-  console.log("repoStarData: ", reposStarData);
-  console.log("Return data for repoStarData: ", reposStarData.sort((d1, d2) => {
+  console.log("finalreposStarData: ", finalreposStarData);
+  console.log("Return data for repoStarData: ", finalreposStarData.sort((d1, d2) => {
     return (
       Math.max(...d2.starRecords.map((s) => s.count)) -
       Math.max(...d1.starRecords.map((s) => s.count))
     );
   }));
 
-  return reposStarData.sort((d1, d2) => {
+  return finalreposStarData.sort((d1, d2) => {
     return (
       Math.max(...d2.starRecords.map((s) => s.count)) -
       Math.max(...d1.starRecords.map((s) => s.count))
