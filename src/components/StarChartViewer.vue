@@ -27,14 +27,12 @@
       </div>
     </div>
     <!-- Main chart display -->
-    <div class="mt-8" style="width: 100%; height: 300vh;">
     <StarXYChart
       v-if="state.chartData"
-      classname="w-full h-screen mt-4"
+      classname="w-full h-auto mt-4"
       :data="state.chartData"
       :chart-mode="chartMode"
     />
-    </div>
   </div>
   <div
     v-if="state.chartData"
@@ -178,49 +176,52 @@ const chartMode = computed(() => {
 });
 
 onMounted(() => {
-  if (store.repos.length > 0) {
-    fetchReposData(store.repos);
+  if (store.org.length > 0) {
+    fetchReposData(store.org);
   }
 });
 
 // When repo is added to store, this is triggered
 watch(
-  () => store.repoList,
+  () => store.org,
   () => {
-    fetchReposData(store.repoList);
+    fetchReposData(store.org);
   }
 );
 
 //Main function to convert repo Data to chart data
-const fetchReposData = async (repos: string[]) => {
-  state.repoCacheMap.clear();
-  console.log(repos);
+const fetchReposData = async (org: string[]) => {
+  console.log("Organizations: ", org);
+  console.log("State - repo Cache map: ", state.repoCacheMap);
+  // state.repoCacheMap.clear();
+  // console.log(org);
   store.setIsFetching(true);
-  const notCachedRepos: string[] = [];
+  const notCachedOrgs: string[] = [];
   let data: any;
 
-  // for (const repo of repos) {
-  //   const cachedRepo = state.repoCacheMap.get(repo);
+  for (const orgName of org) {
+    const cachedOrg = state.repoCacheMap.get(orgName);
+    console.log("Cached org: ", cachedOrg);
 
-  //   if (!cachedRepo) {
-  //     notCachedRepos.push(repo);
-  //   }
-  // }
+    if (!cachedOrg) {
+      notCachedOrgs.push(orgName);
+    }
+  }
 
-  // console.log("Not cached repos: ", notCachedRepos);
+  console.log("Not cached org: ", notCachedOrgs);
   try {
-    data = await getRepoData(repos, store.token);
+    data = await getRepoData(notCachedOrgs, store.token);
     console.log("Data: ", data);
-    // for (const { repo, starRecords, logoUrl } of data) {
-    //   console.log("Repo name: ", repo, " has ", starRecords);
+    for (const { repo, starRecords, logoUrl } of data) {
+      console.log("Org name: ", repo, " has ", starRecords);
     
 
-    state.repoCacheMap.set( data[0]["repo"], {
-      key: data[0]["repo"],
-      starData: data[0]["starRecords"],
-      logoUrl: data[0]["logoUrl"],
+    state.repoCacheMap.set( repo, {
+      key: repo,
+      starData: starRecords,
+      logoUrl: logoUrl,
     });
-    // }
+    }
     console.log("Repo Cache map: ", state.repoCacheMap);
   } catch (error: any) {
     toast.warn(error.message);
@@ -228,28 +229,27 @@ const fetchReposData = async (repos: string[]) => {
     if (error.status === 401 || error.status === 403) {
       state.showSetTokenDialog = true;
     } else if (error.status === 404 || error.status === 501) {
-      store.delRepo(error.repo);
+      store.delOrg(error.repo);
     }
   }
   
 
   let repoData: RepoData[] = [];
- 
-  // for (const repo of repos) {
+  for (const orgName of org) {
     // console.log("Key for the map:", );
     // console.log("Manually retrieving: ", state.repoCacheMap.get(data[0]["repo"]));
-    const cachedRepo = state.repoCacheMap.get(data[0]["repo"]);
-    console.log(cachedRepo);
-    if (cachedRepo) {
+    const cachedOrg = state.repoCacheMap.get(orgName);
+    console.log(cachedOrg);
+    if (cachedOrg) {
       console.log("Came in cachedrepo loop");
-      repoData = [ 
+      repoData.push( 
       {
-        repo: cachedRepo.key,
-        starRecords: cachedRepo.starData,
-        logoUrl: cachedRepo.logoUrl
-      }];
+        repo: cachedOrg.key,
+        starRecords: cachedOrg.starData,
+        logoUrl: cachedOrg.logoUrl
+      });
     }
-  // }
+  }
   console.log("Final repo data for charting: ", repoData);
   
   if (!repoData) {
@@ -355,7 +355,7 @@ const handleGenerateImageBtnClick = async () => {
 
 const handleExportAsCSVBtnClick = () => {
   let CSVContent = "";
-  for (const repo of store.repos) {
+  for (const repo of store.org) {
     const records = state.repoCacheMap.get(repo)?.starData;
     if (records) {
       const temp: any[] = [];
@@ -385,8 +385,8 @@ const handleExportAsCSVBtnClick = () => {
 };
 
 const handleShareToTwitterBtnClick = async () => {
-  const repos = store.repos;
-  if (repos.length === 0) {
+  const org = store.org;
+  if (org.length === 0) {
     toast.error("No repo found");
     return;
   }
@@ -394,8 +394,8 @@ const handleShareToTwitterBtnClick = async () => {
   const starhistoryLink = encodeURIComponent(window.location.href);
   let text = "";
 
-  if (repos.length === 1) {
-    const repo = repos[0];
+  if (org.length === 1) {
+    const repo = org[0];
     let starCount = 0;
 
     try {
@@ -413,11 +413,11 @@ const handleShareToTwitterBtnClick = async () => {
     }
     text = `${starText}Thank you! 🙏%0A${starhistoryLink}%0A%0A`;
   } else {
-    text = repos.join(" vs ") + "%0A%0A";
+    text = org.join(" vs ") + "%0A%0A";
   }
 
   const addtionLink =
-    repos.length === 1 ? `github.com/${repos[0]}` : starhistoryLink;
+    org.length === 1 ? `github.com/${org[0]}` : starhistoryLink;
   text += `${addtionLink}%0A%0A`;
   text += `${encodeURIComponent("#starhistory #GitHub #OpenSource ")}`;
   const tweetShareLink = `https://twitter.com/intent/tweet?text=${text}%0A&via=StarHistoryHQ`;
@@ -437,7 +437,7 @@ const handleGenEmbedCodeDialogClose = () => {
 
 const handleToggleChartBtnClick = () => {
   store.setChartMode(chartMode.value === "Date" ? "Timeline" : "Date");
-  fetchReposData(store.repos);
+  fetchReposData(store.org);
 };
 
 const handleSetTokenDialogClose = () => {
