@@ -2,6 +2,9 @@ import { XYChartData, XYData } from "../packages/xy-chart";
 import { ChartMode, RepoStarData, RepoData } from "../types/chart";
 import api from "./api";
 import utils from "./utils";
+import axios from 'axios';
+import moment from 'moment';
+
 
 export const DEFAULT_MAX_REQUEST_AMOUNT = 15;
 
@@ -71,6 +74,7 @@ export const getReposStarData = async (
 };
 
 
+
 export const getRepoData = async (
   repos: string[],
   token = "",
@@ -97,12 +101,20 @@ export const getRepoData = async (
     //Org repo names
     console.log("Org initial value: ", repo);
     let repoNames = await api.getOrgRepos(repo);
+    console.log("Repo direct names: ", repoNames);
+
+    // Python packages logic
+    // for (const subrepo of repoNames){
+    //   const pythonPackageData = await api.getDownloadData(subrepo);
+    //   console.log("Pepytech API result for ", subrepo, " : ", pythonPackageData);
+    // }
+
     repoNames = repoNames.map(item => `${repo}/${item}`)
     console.log("Repo Names: ", repoNames);
+    
 
     
     for(const subrepo of repoNames){
-    
   
     try {
       const starRecords = await api.getRepoStarRecords(
@@ -174,22 +186,81 @@ export const getRepoData = async (
   flatArray.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   console.log("Sorted Flat array: ", flatArray);
   
-  // Step 3: Group the array by date
-  let groupedByDate = flatArray.reduce((acc, cur) => {
-    let date = cur.date;
-    if (!acc[date]) {
-      acc[date] = [];
+  // // Step 3: Group the array by date
+  // let groupedByDate = flatArray.reduce((acc, cur) => {
+  //   let date = cur.date;
+  //   if (!acc[date]) {
+  //     acc[date] = [];
+  //   }
+  //   acc[date].push(cur);
+  //   return acc;
+  // }, {} as Record<string, typeof flatArray>);
+  // console.log("Array grouped by date: ", groupedByDate);
+
+  
+  // // Step 4: Sum the counts for each group
+  // let summedCounts = Object.entries(groupedByDate).map(([date, records]) => {
+  //   let totalCount = records.reduce((sum, record) => sum + record.count, 0);
+  //   return {date, count: totalCount};
+  // });
+
+  // let groupedByWeek: Record<string, typeof flatArray> = flatArray.reduce((acc, cur) => {
+  //   const yearWeek = `${moment(cur.date).year()}-${moment(cur.date).week()}`;
+   
+  //   if (!acc[yearWeek]) {
+  //      acc[yearWeek] = [];
+  //   }
+   
+  //   acc[yearWeek].push(cur);
+   
+  //   return acc;
+  //  }, {} as Record<string, typeof flatArray>);
+  //  console.log("Array grouped by week: ", groupedByWeek);
+
+  // let runningTotal = 0;
+  // let summedCounts: {date: string, count: number}[] = Object.entries(groupedByWeek).map(([week, records]: [string, typeof flatArray]) => {
+  //     let totalCount = records.reduce((sum, record) => sum + record.count, 0);
+  //     runningTotal += totalCount;
+      
+  //     // Calculate the middle date of the week
+  //     let year = parseInt(week.split('-')[0]);
+  //     let weekNumber = parseInt(week.split('-')[1]);
+  //     let startOfWeek = moment().year(year).week(weekNumber).day(1).format();
+  //     let endOfWeek = moment().year(year).week(weekNumber).day(7).format();
+  //     let middleOfWeek = new Date((new Date(startOfWeek).getTime() + new Date(endOfWeek).getTime()) / 2).toISOString().split('T')[0];
+      
+  //     return {date: middleOfWeek, count: runningTotal};
+  // });
+
+
+  let groupedByMonth: Record<string, typeof flatArray> = flatArray.reduce((acc, cur) => {
+    const yearMonth = `${moment(cur.date).year()}-${moment(cur.date).month() + 1}`;
+  
+    if (!acc[yearMonth]) {
+       acc[yearMonth] = [];
     }
-    acc[date].push(cur);
+  
+    acc[yearMonth].push(cur);
+   
     return acc;
   }, {} as Record<string, typeof flatArray>);
-  console.log("Array grouped by date: ", groupedByDate);
-  
-  // Step 4: Sum the counts for each group
-  let summedCounts = Object.entries(groupedByDate).map(([date, records]) => {
+  console.log("Array grouped by month: ", groupedByMonth);
+
+  let runningTotal = 0;
+  let summedCounts: {date: string, count: number}[] = Object.entries(groupedByMonth).map(([month, records]: [string, typeof flatArray]) => {
     let totalCount = records.reduce((sum, record) => sum + record.count, 0);
-    return {date, count: totalCount};
-  });
+    runningTotal += totalCount;
+    
+    // Calculate the middle date of the month
+    let year = parseInt(month.split('-')[0]);
+    let monthNumber = parseInt(month.split('-')[1]);
+    let startOfMonth = moment().year(year).month(monthNumber - 1).startOf('month').format();
+    let endOfMonth = moment().year(year).month(monthNumber - 1).endOf('month').format();
+    let middleOfMonth = new Date((new Date(startOfMonth).getTime() + new Date(endOfMonth).getTime()) / 2).toISOString().split('T')[0];
+    
+    return {date: middleOfMonth, count: runningTotal};
+});
+
 
   repoDataCacheMap.set(repo, { orgName: repo, star: summedCounts, logo: reposStarData[0]["logoUrl"] });
 

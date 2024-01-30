@@ -250,7 +250,8 @@ const fetchReposData = async (org: string[]) => {
       });
     }
   }
-  console.log("Final repo data for charting: ", repoData);
+  // console.log("Final repo data for charting: ", );
+  // {(repoData[0]["starRecords"][0]["date"]) : (repoData[0]["starRecords"][0]["count"])} 
   
   if (!repoData) {
     state.chartData = undefined;

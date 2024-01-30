@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 import utils from "./utils";
 
 const DEFAULT_PER_PAGE = 30;
@@ -23,6 +23,59 @@ namespace api {
    }
 
     return repoNames;
+  }
+
+  export async function getDownloadData(
+    repo: string
+  ) {
+    let data: { [x: string]: any[]; };
+    let url = `https://api.pepy.tech/api/v2/projects/${repo}` ;
+    const headers = {
+      'X-Api-Key': '/Md29pyAyCS72om329LRZJL+QA/+Cwen',
+    };
+    console.log("URL for fetching repos: ", url);
+  
+
+    try {
+      const response = await axios.get(url, {headers});
+      data = response.data;
+      data["versions"] = data["versions"].filter((version: any) => version === "1.0")
+   } catch (error) {
+      console.log(`Failed to fetch repos: ${error}`);
+      return [];
+   }
+
+    return data;
+  }
+
+  export async function predictData(
+    prevData: string
+  ) {
+
+    const authToken = '6oYHnLGJ5SUV4cD7N0iWmIO42x14tr3jyv3IjGqMb6lE3omOcBSGvAQrALf9uDOaMWEvj0wTWpM011EYcEgtFyfdNKNvl1RtrGIoCXsqWJa7bfPNVtnSIV6oz6VOefpHbxknABNcZJAMEBEhcB3WJrr0fQRPP49FTL6QNxmAaZ1M9U7xs7MOhUcbzaCJBhsBdD0V7CWXhehfYKWqmztJEaLLNB1pdMcVrPODPqimb7EitVVd05W8WLHNHa93oTX6';
+    const apiUrl = 'https://api.example.com/timegpt_timegpt';
+    
+    axios.post(apiUrl, {
+     model: 'timegpt-1',
+     freq: 'D',
+     fh: 7,
+     y: prevData,
+     clean_ex_first: true,
+     finetune_steps: 0,
+     finetune_loss: 'default'
+    }, {
+     headers: {
+        'Authorization': `Bearer ${authToken}`
+     }
+    })
+    .then(response => {
+     console.log(response.data);
+    })
+    .catch(error => {
+     console.error(error);
+    });
+    
+
   }
 
   export async function getRepoStargazers(
