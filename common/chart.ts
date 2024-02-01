@@ -202,6 +202,7 @@ export const getRepoData = async (
     const month = new Date(flatArray[i]["date"]).getMonth() + 1;
     console.log("Month: ", month);
     const year = new Date(flatArray[i]["date"]).getFullYear();
+    const day = new Date(flatArray[i]["date"]).getDay();
     const date = year.toString() + "/" + month.toString();
 
     if (date in tempSummedCounts){
@@ -213,7 +214,27 @@ export const getRepoData = async (
 
     prevCount = tempSummedCounts[date];
   }
+  console.log("Temp Summed counts: ", tempSummedCounts);
 
+
+  let predictSummedCounts: {[key: string]: number} = {};
+  let visitedDates = {};
+  for (let i = 0; i<flatArray.length; i++ ){
+    const month = new Date(flatArray[i]["date"]).getMonth() + 1;
+    const year = new Date(flatArray[i]["date"]).getFullYear();
+    const day = new Date(flatArray[i]["date"]).getDate();
+    const date = year.toString() + "/" + month.toString();
+    const predictDate = year.toString() + "-" + month.toString() + "-" + day.toString();
+
+    if (date in tempSummedCounts && !(date in visitedDates)){
+      predictSummedCounts[predictDate] = tempSummedCounts[date];
+      visitedDates[date] = true;
+    } 
+  }
+  console.log("Predict Temp Summed counts: ", predictSummedCounts);
+
+  let predictedData = await api.predictData(predictSummedCounts);
+  console.log("Predicted Data from TimeGPT: ", predictedData);
   
   // // Step 3: Group the array by date
   // let groupedByDate = flatArray.reduce((acc, cur) => {
@@ -262,40 +283,40 @@ export const getRepoData = async (
   // });
 
 
-//   let groupedByMonth: Record<string, typeof flatArray> = flatArray.reduce((acc, cur) => {
-//     const yearMonth = `${moment(cur.date).year()}-${moment(cur.date).month() + 1}`;
-  
-//     if (!acc[yearMonth]) {
-//        acc[yearMonth] = [];
-//     }
-  
-//     acc[yearMonth].push(cur);
-   
-//     return acc;
-//   }, {} as Record<string, typeof flatArray>);
-//   console.log("Array grouped by month: ", groupedByMonth);
+  //   let groupedByMonth: Record<string, typeof flatArray> = flatArray.reduce((acc, cur) => {
+  //     const yearMonth = `${moment(cur.date).year()}-${moment(cur.date).month() + 1}`;
+    
+  //     if (!acc[yearMonth]) {
+  //        acc[yearMonth] = [];
+  //     }
+    
+  //     acc[yearMonth].push(cur);
+    
+  //     return acc;
+  //   }, {} as Record<string, typeof flatArray>);
+  //   console.log("Array grouped by month: ", groupedByMonth);
 
-//   let runningTotal = 0;
-//   let summedCounts: {date: string, count: number}[] = Object.entries(groupedByMonth).map(([month, records]: [string, typeof flatArray]) => {
-//     let totalCount = records.reduce((sum, record) => sum + record.count, 0);
-//     runningTotal += totalCount;
-    
-//     // Calculate the middle date of the month
-//     let year = parseInt(month.split('-')[0]);
-//     let monthNumber = parseInt(month.split('-')[1]);
-//     let startOfMonth = moment().year(year).month(monthNumber - 1).startOf('month').format();
-//     let endOfMonth = moment().year(year).month(monthNumber - 1).endOf('month').format();
-//     let middleOfMonth = new Date((new Date(startOfMonth).getTime() + new Date(endOfMonth).getTime()) / 2).toISOString().split('T')[0];
-    
-//     return {date: middleOfMonth, count: totalCount};
-// });
+  //   let runningTotal = 0;
+  //   let summedCounts: {date: string, count: number}[] = Object.entries(groupedByMonth).map(([month, records]: [string, typeof flatArray]) => {
+  //     let totalCount = records.reduce((sum, record) => sum + record.count, 0);
+  //     runningTotal += totalCount;
+      
+  //     // Calculate the middle date of the month
+  //     let year = parseInt(month.split('-')[0]);
+  //     let monthNumber = parseInt(month.split('-')[1]);
+  //     let startOfMonth = moment().year(year).month(monthNumber - 1).startOf('month').format();
+  //     let endOfMonth = moment().year(year).month(monthNumber - 1).endOf('month').format();
+  //     let middleOfMonth = new Date((new Date(startOfMonth).getTime() + new Date(endOfMonth).getTime()) / 2).toISOString().split('T')[0];
+      
+  //     return {date: middleOfMonth, count: totalCount};
+  // });
 
   const transformObject = obj => {
- return Object.entries(obj)
+   return Object.entries(obj)
     .map(([date, count]) => ({ date, count }));
-};
-  const summedCounts = transformObject(tempSummedCounts)
-  console.log("Summed counts: ", summedCounts)
+  };
+  const summedCounts = transformObject(tempSummedCounts);
+  console.log("Summed counts: ", summedCounts);
 
   repoDataCacheMap.set(repo, { orgName: repo, star: summedCounts, logo: reposStarData[0]["logoUrl"] });
 
