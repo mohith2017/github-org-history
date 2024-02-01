@@ -86,7 +86,7 @@ export const getRepoData = async (
       orgName: string;
       star: {
         date: string;
-        count: number;
+        count: any;
       }[];
       logo: string;
     }
@@ -174,7 +174,15 @@ export const getRepoData = async (
     }
    }
 
-   console.log("Repo star data: " , reposStarData);
+   
+  console.log("Repo star data: " , reposStarData);
+  console.log("Repo star data type: ", typeof reposStarData);
+
+
+   //New logic - Before coming to this part, first make every value within a repositories star count = value - prevValue(increase from previous star value)
+   // Then while going through each repo - isolate all of the objects and add it to another object.
+   // sort it
+   // incrementally add from one date to the next till it reaches the last, by adding its previous object's count value
 
   // Step 1: Flatten the array
   let flatArray = reposStarData.flatMap(repo => 
@@ -185,6 +193,27 @@ export const getRepoData = async (
   // Step 2: Sort the array by date
   flatArray.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   console.log("Sorted Flat array: ", flatArray);
+
+
+  let tempSummedCounts: {} = {};
+  let prevCount = 0;
+  console.log("Flat array first value: ", flatArray[0]);
+  for (let i = 0; i<flatArray.length; i++ ){
+    const month = new Date(flatArray[i]["date"]).getMonth() + 1;
+    console.log("Month: ", month);
+    const year = new Date(flatArray[i]["date"]).getFullYear();
+    const date = year.toString() + "/" + month.toString();
+
+    if (date in tempSummedCounts){
+      tempSummedCounts[date] += flatArray[i]["count"];
+    }
+    else{
+      tempSummedCounts[date] = flatArray[i]["count"] + prevCount;
+    }
+
+    prevCount = tempSummedCounts[date];
+  }
+
   
   // // Step 3: Group the array by date
   // let groupedByDate = flatArray.reduce((acc, cur) => {
@@ -233,34 +262,40 @@ export const getRepoData = async (
   // });
 
 
-  let groupedByMonth: Record<string, typeof flatArray> = flatArray.reduce((acc, cur) => {
-    const yearMonth = `${moment(cur.date).year()}-${moment(cur.date).month() + 1}`;
+//   let groupedByMonth: Record<string, typeof flatArray> = flatArray.reduce((acc, cur) => {
+//     const yearMonth = `${moment(cur.date).year()}-${moment(cur.date).month() + 1}`;
   
-    if (!acc[yearMonth]) {
-       acc[yearMonth] = [];
-    }
+//     if (!acc[yearMonth]) {
+//        acc[yearMonth] = [];
+//     }
   
-    acc[yearMonth].push(cur);
+//     acc[yearMonth].push(cur);
    
-    return acc;
-  }, {} as Record<string, typeof flatArray>);
-  console.log("Array grouped by month: ", groupedByMonth);
+//     return acc;
+//   }, {} as Record<string, typeof flatArray>);
+//   console.log("Array grouped by month: ", groupedByMonth);
 
-  let runningTotal = 0;
-  let summedCounts: {date: string, count: number}[] = Object.entries(groupedByMonth).map(([month, records]: [string, typeof flatArray]) => {
-    let totalCount = records.reduce((sum, record) => sum + record.count, 0);
-    runningTotal += totalCount;
+//   let runningTotal = 0;
+//   let summedCounts: {date: string, count: number}[] = Object.entries(groupedByMonth).map(([month, records]: [string, typeof flatArray]) => {
+//     let totalCount = records.reduce((sum, record) => sum + record.count, 0);
+//     runningTotal += totalCount;
     
-    // Calculate the middle date of the month
-    let year = parseInt(month.split('-')[0]);
-    let monthNumber = parseInt(month.split('-')[1]);
-    let startOfMonth = moment().year(year).month(monthNumber - 1).startOf('month').format();
-    let endOfMonth = moment().year(year).month(monthNumber - 1).endOf('month').format();
-    let middleOfMonth = new Date((new Date(startOfMonth).getTime() + new Date(endOfMonth).getTime()) / 2).toISOString().split('T')[0];
+//     // Calculate the middle date of the month
+//     let year = parseInt(month.split('-')[0]);
+//     let monthNumber = parseInt(month.split('-')[1]);
+//     let startOfMonth = moment().year(year).month(monthNumber - 1).startOf('month').format();
+//     let endOfMonth = moment().year(year).month(monthNumber - 1).endOf('month').format();
+//     let middleOfMonth = new Date((new Date(startOfMonth).getTime() + new Date(endOfMonth).getTime()) / 2).toISOString().split('T')[0];
     
-    return {date: middleOfMonth, count: runningTotal};
-});
+//     return {date: middleOfMonth, count: totalCount};
+// });
 
+  const transformObject = obj => {
+ return Object.entries(obj)
+    .map(([date, count]) => ({ date, count }));
+};
+  const summedCounts = transformObject(tempSummedCounts)
+  console.log("Summed counts: ", summedCounts)
 
   repoDataCacheMap.set(repo, { orgName: repo, star: summedCounts, logo: reposStarData[0]["logoUrl"] });
 

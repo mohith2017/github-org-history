@@ -195,6 +195,13 @@ namespace api {
       });
     });
 
+    let prevCount = 0;
+    for(const record in starRecords){
+      const temp = starRecords[record]["count"];
+      starRecords[record]["count"] -= prevCount;
+      prevCount = temp;
+    }
+
     return starRecords;
   }
 
