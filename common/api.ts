@@ -75,23 +75,8 @@ namespace api {
     .then(response => output = response.json())
     .then(response => console.log(response))
     .catch(err => console.error(err));
-
-    // const sdk = require('api')('@timegpt/v0.0.2#5sdpzxslqzvxiij');
-
-    // sdk.auth('6oYHnLGJ5SUV4cD7N0iWmIO42x14tr3jyv3IjGqMb6lE3omOcBSGvAQrALf9uDOaMWEvj0wTWpM011EYcEgtFyfdNKNvl1RtrGIoCXsqWJa7bfPNVtnSIV6oz6VOefpHbxknABNcZJAMEBEhcB3WJrr0fQRPP49FTL6QNxmAaZ1M9U7xs7MOhUcbzaCJBhsBdD0V7CWXhehfYKWqmztJEaLLNB1pdMcVrPODPqimb7EitVVd05W8WLHNHa93oTX6');
-    // const result = sdk.timegpt_timegpt_post({
-    //   model: 'timegpt-1',
-    //   freq: 'D',
-    //   fh: 7,
-    //   y: prevData,
-    //   clean_ex_first: true,
-    //   finetune_steps: 0,
-    //   finetune_loss: 'default'
-    // })
-    //   .then(({ data }) => console.log(data))
-    //   .catch(err => console.error(err));
     
-    return output["data"];
+    return output;
 
   }
 

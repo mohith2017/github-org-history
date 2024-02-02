@@ -217,24 +217,7 @@ export const getRepoData = async (
   console.log("Temp Summed counts: ", tempSummedCounts);
 
 
-  let predictSummedCounts: {[key: string]: number} = {};
-  let visitedDates = {};
-  for (let i = 0; i<flatArray.length; i++ ){
-    const month = new Date(flatArray[i]["date"]).getMonth() + 1;
-    const year = new Date(flatArray[i]["date"]).getFullYear();
-    const day = new Date(flatArray[i]["date"]).getDate();
-    const date = year.toString() + "/" + month.toString();
-    const predictDate = year.toString() + "-" + month.toString() + "-" + day.toString();
-
-    if (date in tempSummedCounts && !(date in visitedDates)){
-      predictSummedCounts[predictDate] = tempSummedCounts[date];
-      visitedDates[date] = true;
-    } 
-  }
-  console.log("Predict Temp Summed counts: ", predictSummedCounts);
-
-  let predictedData = await api.predictData(predictSummedCounts);
-  console.log("Predicted Data from TimeGPT: ", predictedData);
+  
   
   // // Step 3: Group the array by date
   // let groupedByDate = flatArray.reduce((acc, cur) => {

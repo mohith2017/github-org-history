@@ -10,10 +10,14 @@
       <div class="absolute w-full h-full blur-md bg-white bg-opacity-80"></div>
       <i class="fas fa-spinner animate-spin text-4xl z-10"></i>
     </div>
+    <!-- Add a new toggle button -->
+
+    
     <div
       v-if="state.chartData"
       class="absolute top-0 right-1 p-2 flex flex-row"
     >
+    
       <div
         class="flex flex-row justify-center items-center rounded leading-8 text-sm px-3 cursor-pointer z-10 text-dark select-none hover:bg-gray-100"
         @click="handleToggleChartBtnClick"
@@ -21,11 +25,45 @@
         <input
           class="mr-2"
           type="checkbox"
+          color="blue"
           :checked="chartMode === 'Timeline'"
         />
+        
+       
+    
         Align timeline
       </div>
+
+
+        <!-- <template>
+        <v-app>
+            <v-container>
+              <v-switch
+              label="Predict"
+              color="red"
+              v-model="state.predictData"
+              @change="handleToggleChartBtnClick"
+          ></v-switch>
+        </v-container>
+        </v-app>
+      </template> -->
+
+        <div
+          class="flex flex-row justify-start items-center rounded leading-8 text-sm px-3 cursor-pointer z-10 text-dark select-none hover:bg-gray-100"
+          
+        >
+
+            <input
+                class="mr-2"
+                type="checkbox"
+                color="blue"
+                @click="handleTogglePredictBtnClick"
+              />
+            Predict Data
+        </div>
     </div>
+
+
     <!-- Main chart display -->
     <StarXYChart
       v-if="state.chartData"
@@ -33,7 +71,7 @@
       :data="state.chartData"
       :chart-mode="chartMode"
     />
-  </div>
+</div>
   <div
     v-if="state.chartData"
     class="relative mt-4 mb-4 w-full px-3 mx-auto max-w-4xl flex flex-row flex-wrap justify-between items-center"
@@ -153,6 +191,8 @@ interface State {
   showSetTokenDialog: boolean;
   showGenEmbedCodeDialog: boolean;
   showEmbedChartGuideDialog: boolean;
+  predictData: "Predict" | "Regular";
+  predictedRecords: {date: string, count:number}[];
 }
 
 const state = reactive<State>({
@@ -163,6 +203,8 @@ const state = reactive<State>({
   showSetTokenDialog: false,
   showGenEmbedCodeDialog: false,
   showEmbedChartGuideDialog: false,
+  predictData: "Regular",
+  predictedRecords: [{date: "", count:0}],
 });
 const store = useAppStore();
 
@@ -182,12 +224,22 @@ onMounted(() => {
 });
 
 // When repo is added to store, this is triggered
+// watch(
+//   () => store.org,
+//   () => {
+//     fetchReposData(store.org);
+//   }
+// );
+
+//change to when button is toggled
 watch(
   () => store.org,
   () => {
     fetchReposData(store.org);
   }
 );
+
+
 
 //Main function to convert repo Data to chart data
 const fetchReposData = async (org: string[]) => {
@@ -203,7 +255,7 @@ const fetchReposData = async (org: string[]) => {
     const cachedOrg = state.repoCacheMap.get(orgName);
     console.log("Cached org: ", cachedOrg);
 
-    if (!cachedOrg) {
+    if (!cachedOrg || state.predictData=="Predict" || state.predictData=="Regular") {
       notCachedOrgs.push(orgName);
     }
   }
@@ -212,15 +264,66 @@ const fetchReposData = async (org: string[]) => {
   try {
     data = await getRepoData(notCachedOrgs, store.token);
     console.log("Data: ", data);
-    for (const { repo, starRecords, logoUrl } of data) {
+    for (let { repo, starRecords, logoUrl } of data) {
       console.log("Org name: ", repo, " has ", starRecords);
+      
+      
     
+      // if button clicked : predictedStarRecords, else: starRecords
+      if (state.predictData=="Predict"){
+        //TimeGPT logic - toggle only when flag is true
+      let predictSummedCounts: {[key: string]: number} = {};
+      let star:any = 0;
+      for (star in starRecords ){
+        const month = new Date(starRecords[star]["date"]).getMonth() + 1;
+        const year = new Date(starRecords[star]["date"]).getFullYear();
+        const day = "15";
+        const predictDate = year.toString() + "-" + month.toString() + "-" + day;
 
-    state.repoCacheMap.set( repo, {
-      key: repo,
-      starData: starRecords,
-      logoUrl: logoUrl,
-    });
+        predictSummedCounts[predictDate] = starRecords[star]["count"];
+      }
+      console.log("Predict Temp Summed counts: ", predictSummedCounts);
+
+
+
+      let predictedData = await api.predictData(predictSummedCounts);
+      console.log("Predicted Data from TimeGPT: ", predictedData.data["timestamp"]);
+
+      let index:any = starRecords.length;
+      let predictedStarRecords = starRecords;
+      for(const data in predictedData.data["timestamp"]){
+        console.log(data);
+        const month = new Date(predictedData.data["timestamp"][data]).getMonth() + 1;
+        console.log(month);
+        const year = new Date(predictedData.data["timestamp"][data]).getFullYear();
+        const newPredictDate = year.toString() + "/" + month.toString();
+        // console.log(predictedData.data["value"]);
+
+        console.log("Star records prev value: ", predictedStarRecords[index-1]);
+        predictedStarRecords[index] = {date: "", count: 0}
+        // starRecords[index] = {date: newPredictDate, count: predictedData.data["count"][data]};
+        console.log("Star records new value: ", predictedStarRecords[index]);
+        predictedStarRecords[index]["date"] = newPredictDate; 
+        predictedStarRecords[index]["count"] = predictedData.data["value"][data];
+        console.log("Star records updated  value: ", predictedStarRecords[index]);
+        index += 1;
+      }
+
+      console.log("New Predicted Star Records from TimeGPT: ", predictedStarRecords);
+        state.predictedRecords = predictedStarRecords;
+      }
+      else{
+        state.predictedRecords = starRecords;
+      }
+
+      console.log("Chosen state for the records - ", state.predictedRecords);
+      
+      
+      state.repoCacheMap.set( repo, {
+        key: repo,
+        starData: state.predictedRecords,
+        logoUrl: logoUrl,
+      });
     }
     console.log("Repo Cache map: ", state.repoCacheMap);
   } catch (error: any) {
@@ -250,6 +353,9 @@ const fetchReposData = async (org: string[]) => {
       });
     }
   }
+
+
+  
   // console.log("Final repo data for charting: ", );
   // {(repoData[0]["starRecords"][0]["date"]) : (repoData[0]["starRecords"][0]["count"])} 
   
@@ -440,6 +546,18 @@ const handleToggleChartBtnClick = () => {
   store.setChartMode(chartMode.value === "Date" ? "Timeline" : "Date");
   fetchReposData(store.org);
 };
+
+const handleTogglePredictBtnClick = () => {
+  if (state.predictData == "Regular"){
+     state.predictData = "Predict";
+  }
+  else{
+    state.predictData = "Regular";
+  }
+  console.log("State: ", state.predictData);
+  fetchReposData(store.org);
+};
+
 
 const handleSetTokenDialogClose = () => {
   state.showSetTokenDialog = false;
