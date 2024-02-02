@@ -49,32 +49,34 @@ namespace api {
   }
 
   export async function predictData(
-    prevData: string
+    prevData: {[key: string]: number}
   ) {
 
-    const authToken = '6oYHnLGJ5SUV4cD7N0iWmIO42x14tr3jyv3IjGqMb6lE3omOcBSGvAQrALf9uDOaMWEvj0wTWpM011EYcEgtFyfdNKNvl1RtrGIoCXsqWJa7bfPNVtnSIV6oz6VOefpHbxknABNcZJAMEBEhcB3WJrr0fQRPP49FTL6QNxmAaZ1M9U7xs7MOhUcbzaCJBhsBdD0V7CWXhehfYKWqmztJEaLLNB1pdMcVrPODPqimb7EitVVd05W8WLHNHa93oTX6';
-    const apiUrl = 'https://api.example.com/timegpt_timegpt';
+    const options = {
+      method: 'POST',
+      headers: {
+        accept: 'application/json',
+        'content-type': 'application/json',
+        authorization: 'Bearer 6oYHnLGJ5SUV4cD7N0iWmIO42x14tr3jyv3IjGqMb6lE3omOcBSGvAQrALf9uDOaMWEvj0wTWpM011EYcEgtFyfdNKNvl1RtrGIoCXsqWJa7bfPNVtnSIV6oz6VOefpHbxknABNcZJAMEBEhcB3WJrr0fQRPP49FTL6QNxmAaZ1M9U7xs7MOhUcbzaCJBhsBdD0V7CWXhehfYKWqmztJEaLLNB1pdMcVrPODPqimb7EitVVd05W8WLHNHa93oTX6'
+      },
+      body: JSON.stringify({
+        model: 'timegpt-1',
+        freq: 'D',
+        fh: 7,
+        y: prevData,
+        clean_ex_first: true,
+        finetune_steps: 0,
+        finetune_loss: 'default'
+      })
+    };
     
-    axios.post(apiUrl, {
-     model: 'timegpt-1',
-     freq: 'D',
-     fh: 7,
-     y: prevData,
-     clean_ex_first: true,
-     finetune_steps: 0,
-     finetune_loss: 'default'
-    }, {
-     headers: {
-        'Authorization': `Bearer ${authToken}`
-     }
-    })
-    .then(response => {
-     console.log(response.data);
-    })
-    .catch(error => {
-     console.error(error);
-    });
+    let output:any = undefined;
+    const result = await fetch('https://dashboard.nixtla.io/api/timegpt', options)
+    .then(response => output = response.json())
+    .then(response => console.log(response))
+    .catch(err => console.error(err));
     
+    return output;
 
   }
 
