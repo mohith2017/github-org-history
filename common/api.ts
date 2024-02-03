@@ -1,5 +1,9 @@
 import axios, { AxiosResponse } from "axios";
+import { HttpProxyAgent } from 'http-proxy-agent';
+import {HttpsProxyAgentOptions} from 'https-proxy-agent'
 import utils from "./utils";
+import { DownloadRecord } from "../types/chart";
+
 
 const DEFAULT_PER_PAGE = 30;
 
@@ -28,8 +32,9 @@ namespace api {
   export async function getDownloadData(
     repo: string
   ) {
-    let data: { [x: string]: any[]; };
-    let url = `https://api.pepy.tech/api/v2/projects/${repo}` ;
+    let data: {};
+    
+    let url = `/api/v2/projects/${repo}` ;
     const headers = {
       'X-Api-Key': '/Md29pyAyCS72om329LRZJL+QA/+Cwen',
     };
@@ -39,17 +44,32 @@ namespace api {
     try {
       const response = await axios.get(url, {headers});
       data = response.data;
-      data["versions"] = data["versions"].filter((version: any) => version === "1.0")
+      
+
+      console.log("Direct API data: ", data);
+      
    } catch (error) {
       console.log(`Failed to fetch repos: ${error}`);
-      return [];
+      return undefined;
    }
+
+  //  console.log("Output: ", output);
+
+  //  let prevCount = 0;
+  //   for(const record in output){
+  //     const temp = output[record]["count"];
+  //     output[record]["count"] -= prevCount;
+  //     if (output[record]["count"] == 0){
+  //       delete output[record];
+  //     }
+  //     prevCount = temp;
+  //   }
 
     return data;
   }
 
   export async function predictData(
-    prevData: {[key: string]: number}
+    prevData: {[key: string]: number} 
   ) {
 
     const options = {

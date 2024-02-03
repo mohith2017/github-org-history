@@ -1,6 +1,6 @@
 import { createPinia, defineStore } from "pinia";
 import storage from "../helpers/storage";
-import { ChartMode } from "../../types/chart";
+import { ChartMode, DownloadData, RepoDownloadData } from "../../types/chart";
 
 export const piniaInstance = createPinia();
 
@@ -10,6 +10,7 @@ interface AppState {
   org: string[];
   chartMode: ChartMode;
   repoList: string[];
+  downloadData: RepoDownloadData[];
 }
 
 const useAppStore = defineStore("appStore", {
@@ -20,6 +21,7 @@ const useAppStore = defineStore("appStore", {
     const org: string[] = [];
     const repoList: string[] = [];
     let chartMode: ChartMode = "Date";
+    const downloadData: RepoDownloadData[] = [];
 
     for (const value of params) {
       if (value === "Date" || value === "Timeline") {
@@ -37,6 +39,7 @@ const useAppStore = defineStore("appStore", {
       org: org,
       repoList: repoList,
       chartMode: chartMode,
+      downloadData: downloadData,
     };
   },
   actions: {
@@ -64,6 +67,10 @@ const useAppStore = defineStore("appStore", {
     },
     setChartMode(chartMode: ChartMode) {
       this.chartMode = chartMode;
+    },
+    setDownloadData(downloadData: RepoDownloadData ){
+        this.downloadData.push(downloadData);
+        console.log(this.downloadData);
     },
   },
 });

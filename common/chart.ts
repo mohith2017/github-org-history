@@ -1,5 +1,6 @@
 import { XYChartData, XYData } from "../packages/xy-chart";
-import { ChartMode, RepoStarData, RepoData } from "../types/chart";
+import { ChartMode, RepoStarData, RepoData, RepoDownloadData, DownloadRecord } from "../types/chart";
+import useAppStore from "../src/store";
 import api from "./api";
 import utils from "./utils";
 import axios from 'axios';
@@ -10,6 +11,8 @@ export const DEFAULT_MAX_REQUEST_AMOUNT = 15;
 
 const STAR_HISTORY_LOGO_URL =
   "https://avatars.githubusercontent.com/u/124480067";
+
+const store = useAppStore();
 
 export const getReposStarData = async (
   repos: string[],
@@ -73,6 +76,96 @@ export const getReposStarData = async (
   });
 };
 
+export const getPredictData = async (starRecords: [{}]) =>
+{
+
+  let predictSummedCounts: {[key: string]: number} = {};
+      let star:any = 0;
+      for (star in starRecords ){
+        const month = new Date(starRecords[star]["date"]).getMonth() + 1;
+        const year = new Date(starRecords[star]["date"]).getFullYear();
+        const day = "15";
+        const predictDate = year.toString() + "-" + month.toString() + "-" + day;
+
+        predictSummedCounts[predictDate] = starRecords[star]["count"];
+      }
+      console.log("Predict Temp Summed counts: ", predictSummedCounts);
+
+
+
+      let predictedData = await api.predictData(predictSummedCounts);
+      console.log("Predicted Data from TimeGPT: ", predictedData.data["timestamp"]);
+
+      let index:any = starRecords.length;
+      let predictedStarRecords = starRecords;
+      for(const data in predictedData.data["timestamp"]){
+        console.log(data);
+        const month = new Date(predictedData.data["timestamp"][data]).getMonth() + 1;
+        console.log(month);
+        const year = new Date(predictedData.data["timestamp"][data]).getFullYear();
+        const newPredictDate = year.toString() + "/" + month.toString();
+        // console.log(predictedData.data["value"]);
+
+        console.log("Star records prev value: ", predictedStarRecords[index-1]);
+        predictedStarRecords[index] = {date: "", count: 0}
+        // starRecords[index] = {date: newPredictDate, count: predictedData.data["count"][data]};
+        console.log("Star records new value: ", predictedStarRecords[index]);
+        predictedStarRecords[index]["date"] = newPredictDate; 
+        predictedStarRecords[index]["count"] = predictedData.data["value"][data];
+        console.log("Star records updated  value: ", predictedStarRecords[index]);
+        index += 1;
+      }
+
+      console.log("New Predicted Star Records from TimeGPT: ", predictedStarRecords);
+      return predictedStarRecords;
+}
+
+export const getPredictDownloadData = async (downloadRecords: DownloadRecord[]) =>
+{
+
+  let predictSummedCounts: {[key: string]: number} = {};
+      let download:any = 0;
+      for (download in downloadRecords ){
+        const month = new Date(downloadRecords[download]["date"]).getMonth() + 1;
+        const year = new Date(downloadRecords[download]["date"]).getFullYear();
+        const day = "15";
+        const predictDate = year.toString() + "-" + month.toString() + "-" + day;
+
+        predictSummedCounts[predictDate] = downloadRecords[download]["count"];
+      }
+      console.log("Predict Temp Summed counts for Download Data: ", predictSummedCounts);
+
+
+
+      let predictedData = await api.predictData(predictSummedCounts);
+      console.log("Predicted Data from TimeGPT for Download Data: ", predictedData.data["timestamp"]);
+
+      let index:any = downloadRecords.length;
+      let predictedDownloadRecords = downloadRecords;
+      for(const data in predictedData.data["timestamp"]){
+        console.log(data);
+        const month = new Date(predictedData.data["timestamp"][data]).getMonth() + 1;
+        console.log(month);
+        const year = new Date(predictedData.data["timestamp"][data]).getFullYear();
+        const newPredictDate = year.toString() + "/" + month.toString();
+        // console.log(predictedData.data["value"]);
+
+        console.log("Download records prev value: ", predictedDownloadRecords[index-1]);
+        predictedDownloadRecords[index] = {date: "", count: 0}
+        // starRecords[index] = {date: newPredictDate, count: predictedData.data["count"][data]};
+        console.log("Download records new value: ", predictedDownloadRecords[index]);
+        predictedDownloadRecords[index]["date"] = newPredictDate; 
+        predictedDownloadRecords[index]["count"] = predictedData.data["value"][data];
+        console.log("Download records updated  value: ", predictedDownloadRecords[index]);
+        index += 1;
+      }
+
+      console.log("New Predicted Download Records from TimeGPT: ", predictedDownloadRecords);
+      return predictedDownloadRecords;
+}
+
+
+
 
 
 export const getRepoData = async (
@@ -105,8 +198,15 @@ export const getRepoData = async (
 
     // Python packages logic
     // for (const subrepo of repoNames){
+    //   let downloadData: RepoDownloadData;
     //   const pythonPackageData = await api.getDownloadData(subrepo);
-    //   console.log("Pepytech API result for ", subrepo, " : ", pythonPackageData);
+    //   if (pythonPackageData){
+    //     console.log("Pepytech API result for ", subrepo, " : ", pythonPackageData); 
+    //     const logo = await api.getRepoLogoUrl(`${repo}/${subrepo}`, token);
+    //     downloadData = {repo: pythonPackageData["repo"], downloadRecords: pythonPackageData["downloadRecords"], logoUrl:logo};
+    //     console.log("Download Data to be pushed: ", downloadData);
+    //     store.setDownloadData(downloadData);
+    //   }
     // }
 
     repoNames = repoNames.map(item => `${repo}/${item}`)
@@ -216,84 +316,6 @@ export const getRepoData = async (
   }
   console.log("Temp Summed counts: ", tempSummedCounts);
 
-
-  
-  
-  // // Step 3: Group the array by date
-  // let groupedByDate = flatArray.reduce((acc, cur) => {
-  //   let date = cur.date;
-  //   if (!acc[date]) {
-  //     acc[date] = [];
-  //   }
-  //   acc[date].push(cur);
-  //   return acc;
-  // }, {} as Record<string, typeof flatArray>);
-  // console.log("Array grouped by date: ", groupedByDate);
-
-  
-  // // Step 4: Sum the counts for each group
-  // let summedCounts = Object.entries(groupedByDate).map(([date, records]) => {
-  //   let totalCount = records.reduce((sum, record) => sum + record.count, 0);
-  //   return {date, count: totalCount};
-  // });
-
-  // let groupedByWeek: Record<string, typeof flatArray> = flatArray.reduce((acc, cur) => {
-  //   const yearWeek = `${moment(cur.date).year()}-${moment(cur.date).week()}`;
-   
-  //   if (!acc[yearWeek]) {
-  //      acc[yearWeek] = [];
-  //   }
-   
-  //   acc[yearWeek].push(cur);
-   
-  //   return acc;
-  //  }, {} as Record<string, typeof flatArray>);
-  //  console.log("Array grouped by week: ", groupedByWeek);
-
-  // let runningTotal = 0;
-  // let summedCounts: {date: string, count: number}[] = Object.entries(groupedByWeek).map(([week, records]: [string, typeof flatArray]) => {
-  //     let totalCount = records.reduce((sum, record) => sum + record.count, 0);
-  //     runningTotal += totalCount;
-      
-  //     // Calculate the middle date of the week
-  //     let year = parseInt(week.split('-')[0]);
-  //     let weekNumber = parseInt(week.split('-')[1]);
-  //     let startOfWeek = moment().year(year).week(weekNumber).day(1).format();
-  //     let endOfWeek = moment().year(year).week(weekNumber).day(7).format();
-  //     let middleOfWeek = new Date((new Date(startOfWeek).getTime() + new Date(endOfWeek).getTime()) / 2).toISOString().split('T')[0];
-      
-  //     return {date: middleOfWeek, count: runningTotal};
-  // });
-
-
-  //   let groupedByMonth: Record<string, typeof flatArray> = flatArray.reduce((acc, cur) => {
-  //     const yearMonth = `${moment(cur.date).year()}-${moment(cur.date).month() + 1}`;
-    
-  //     if (!acc[yearMonth]) {
-  //        acc[yearMonth] = [];
-  //     }
-    
-  //     acc[yearMonth].push(cur);
-    
-  //     return acc;
-  //   }, {} as Record<string, typeof flatArray>);
-  //   console.log("Array grouped by month: ", groupedByMonth);
-
-  //   let runningTotal = 0;
-  //   let summedCounts: {date: string, count: number}[] = Object.entries(groupedByMonth).map(([month, records]: [string, typeof flatArray]) => {
-  //     let totalCount = records.reduce((sum, record) => sum + record.count, 0);
-  //     runningTotal += totalCount;
-      
-  //     // Calculate the middle date of the month
-  //     let year = parseInt(month.split('-')[0]);
-  //     let monthNumber = parseInt(month.split('-')[1]);
-  //     let startOfMonth = moment().year(year).month(monthNumber - 1).startOf('month').format();
-  //     let endOfMonth = moment().year(year).month(monthNumber - 1).endOf('month').format();
-  //     let middleOfMonth = new Date((new Date(startOfMonth).getTime() + new Date(endOfMonth).getTime()) / 2).toISOString().split('T')[0];
-      
-  //     return {date: middleOfMonth, count: totalCount};
-  // });
-
   const transformObject = obj => {
    return Object.entries(obj)
     .map(([date, count]) => ({ date, count }));
@@ -345,6 +367,169 @@ export const getRepoData = async (
     return (
       Math.max(...d2.starRecords.map((s) => s.count)) -
       Math.max(...d1.starRecords.map((s) => s.count))
+    );
+  });
+};
+
+export const getRepoDownloadData = async (
+  repos: string[],
+  token = "",
+  maxRequestAmount = DEFAULT_MAX_REQUEST_AMOUNT
+): Promise<RepoDownloadData[]> => {
+  const repoDataCacheMap: Map<
+    string,
+    {
+      orgName: string;
+      downloadRecords: {date:string, count:any}[];
+      logo: string;
+    }
+  > = new Map();
+
+  console.log("Repos for download input value: ", repos);
+  let reposDownloadData: RepoDownloadData[] = [];
+  let downloadData: DownloadRecord;
+
+  for (const repo of repos) {
+    //Org repo names
+    console.log("Org initial value: ", repo);
+    let repoNames = await api.getOrgRepos(repo);
+    console.log("Repo direct names: ", repoNames);
+
+    // Python packages logic
+    for (const subrepo of repoNames){
+      
+      let output: DownloadRecord[] = [];
+    
+      const data = await api.getDownloadData(subrepo);
+      if (data){
+        console.log("Pepytech API result for ", subrepo, " : ", data); 
+        const logo = await api.getRepoLogoUrl(`${repo}/${subrepo}`, token);
+
+        
+        for(let value in data["downloads"]){
+          const version = data["versions"][0];
+          // console.log("At date: ", value, " versions are: ") 
+          for (const counts in data["downloads"][value]){
+            // console.log("Version: ", counts);
+          }
+          if (data["downloads"][value][version]){
+            const count = data["downloads"][value][version];
+            // console.log("At date: ", value, " , count to be pushed: ", count);
+            output.push({
+              date: value,
+              count: count,
+            });
+            // console.log("Chosen value: ", output);
+          }
+          
+          // else{
+          //   let n = 0;
+          //   while(!data["downloads"][value][data["versions"][n]]){
+          //    n += 1; 
+          //   }
+  
+            
+          //   output.push({
+          //     date: value,
+          //     count: data["downloads"][value][data["versions"][n]],
+          //   });
+          //   console.log("Chosen value: ", output);
+          // }
+        }
+       
+
+        reposDownloadData.push({repo: subrepo, logoUrl: logo, downloadRecords: output});
+        
+        // store.setDownloadData(downloadData);
+      }
+
+    }
+
+    console.log("Download Data: ", reposDownloadData);
+
+    repoNames = repoNames.map(item => `${repo}/${item}`)
+    console.log("Repo Names: ", repoNames);
+   
+  console.log("Repo Download data: " , reposDownloadData);
+  console.log("Repo Download data type: ", typeof reposDownloadData);
+
+
+   //New logic - Before coming to this part, first make every value within a repositories star count = value - prevValue(increase from previous star value)
+   // Then while going through each repo - isolate all of the objects and add it to another object.
+   // sort it
+   // incrementally add from one date to the next till it reaches the last, by adding its previous object's count value
+
+  // Step 1: Flatten the array
+  let flatArray = reposDownloadData.flatMap(repo => 
+    repo.downloadRecords.map(record => ({date: record.date, count: record.count}))
+  );
+  console.log("Downloads Flat array: ", flatArray);
+  
+  // Step 2: Sort the array by date
+  flatArray.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  console.log("Downloads Sorted Flat array: ", flatArray);
+
+
+  let tempSummedCounts: {} = {};
+  let prevCount = 0;
+  console.log("Downloads Flat array first value: ", flatArray[0]);
+  for (let i = 0; i<flatArray.length; i++ ){
+    const month = new Date(flatArray[i]["date"]).getMonth() + 1;
+    console.log("Month: ", month);
+    const year = new Date(flatArray[i]["date"]).getFullYear();
+    const day = new Date(flatArray[i]["date"]).getDay();
+    const date = year.toString() + "/" + month.toString();
+
+    if (date in tempSummedCounts){
+      tempSummedCounts[date] += flatArray[i]["count"];
+    }
+    else{
+      tempSummedCounts[date] = flatArray[i]["count"] + prevCount;
+    }
+
+    prevCount = tempSummedCounts[date];
+  }
+  console.log("Downloads Temp Summed counts: ", tempSummedCounts);
+
+  const transformObject = obj => {
+   return Object.entries(obj)
+    .map(([date, count]) => ({ date, count }));
+  };
+  const summedCounts = transformObject(tempSummedCounts);
+  console.log("Downloads Summed counts: ", summedCounts);
+
+  repoDataCacheMap.set(repo, { orgName: repo, downloadRecords: summedCounts, logo: reposDownloadData[0]["logoUrl"] });
+
+  
+
+  }
+
+  let finalreposDownloadData: RepoDownloadData[] = [];
+  for (const repo of repos) {
+    const records = repoDataCacheMap.get(repo);
+    if (records) {
+      console.log("Records exist");
+      finalreposDownloadData.push({
+        repo,
+        downloadRecords: records.downloadRecords,
+        logoUrl: records.logo,
+      });
+    }
+  }
+
+
+  console.log("finalreposDownloadData: ", finalreposDownloadData);
+  console.log("Return data for reposDownloadData: ", finalreposDownloadData.sort((d1, d2) => {
+    return (
+      Math.max(...d2.downloadRecords.map((s) => s.count)) -
+      Math.max(...d1.downloadRecords.map((s) => s.count))
+    );
+  }));
+
+  return finalreposDownloadData.sort((d1, d2) => {
+    return (
+      Math.max(...d2.downloadRecords.map((s) => s.count)) -
+      Math.max(...d1.downloadRecords.map((s) => s.count))
     );
   });
 };
@@ -427,6 +612,46 @@ export const convertDataToChartData = (
             x:
               utils.getTimeStampByDate(new Date(item.date)) -
               utils.getTimeStampByDate(new Date(starRecords[0].date)),
+            y: Number(item.count),
+          };
+        }),
+      })
+    );
+
+    return { datasets };
+  }
+};
+
+//Function to convert data to Chart Data for Downloads
+export const convertDataToDownloadChartData = (
+  repoData: RepoDownloadData[],
+  chartMode: ChartMode
+): XYChartData => {
+  if (chartMode === "Date") {
+    const datasets: XYData[] = repoData.map(
+      ({ repo, downloadRecords, logoUrl }) => ({
+        label: repo,
+        logo: logoUrl,
+        data: downloadRecords.map((item) => {
+          return {
+            x: new Date(item.date),
+            y: Number(item.count),
+          };
+        }),
+      })
+    );
+
+    return { datasets };
+  } else {
+    const datasets: XYData[] = repoData.map(
+      ({ repo, downloadRecords, logoUrl }) => ({
+        label: repo,
+        logo: logoUrl,
+        data: downloadRecords.map((item) => {
+          return {
+            x:
+              utils.getTimeStampByDate(new Date(item.date)) -
+              utils.getTimeStampByDate(new Date(downloadRecords[0].date)),
             y: Number(item.count),
           };
         }),
