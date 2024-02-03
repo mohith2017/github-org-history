@@ -287,6 +287,7 @@ const fetchDownloadReposData = async (org: string[]) => {
     
       //TimeGPT logic - toggle only when flag is true
       if (state.predictData=="Predict"){
+        console.log("Download State: ", state.predictData);
         let predictedDownloadRecords: DownloadRecord[] = downloadRecords;
         predictedDownloadRecords = await getPredictDownloadData(downloadRecords);
         state.predictedDownloadRecords = predictedDownloadRecords;
@@ -612,6 +613,7 @@ const handleTogglePredictBtnClick = () => {
   }
   console.log("State: ", state.predictData);
   fetchReposData(store.org);
+  fetchDownloadReposData(store.org);
 };
 
 
