@@ -71,6 +71,14 @@
       :data="state.chartData"
       :chart-mode="chartMode"
     />
+
+    <DownloadXYChart
+      v-if="state.downloadChartData"
+      classname="w-full h-auto mt-4"
+      :data="state.downloadChartData"
+      :chart-mode="chartMode"
+    />
+
 </div>
   <div
     v-if="state.chartData"
@@ -162,12 +170,13 @@ import { computed, onMounted, reactive, ref, watch } from "vue";
 import useAppStore from "../store";
 import { XYChartData } from "../../packages/xy-chart";
 import utils from "../../common/utils";
-import { convertDataToChartData, getRepoData } from "../../common/chart";
+import { convertDataToChartData, convertDataToDownloadChartData, getPredictData, getPredictDownloadData, getRepoData, getRepoDownloadData } from "../../common/chart";
 import api from "../../common/api";
 import toast from "../helpers/toast";
-import { RepoData } from "../../types/chart";
+import { DownloadRecord, RepoData, RepoDownloadData } from "../../types/chart";
 import BytebaseBanner from "./SponsorView.vue";
 import StarXYChart from "./Charts/StarXYChart.vue";
+import DownloadXYChart from "./Charts/DownloadXYChart.vue";
 import TokenSettingDialog from "./TokenSettingDialog.vue";
 import GenerateEmbedCodeDialog from "./GenerateEmbedCodeDialog.vue";
 import EmbedMarkdownSection from "./EmbedMarkdownSection.vue";
@@ -186,25 +195,41 @@ interface State {
       logoUrl: string;
     }
   >;
+  downloadRepoCacheMap: Map<
+   string,
+    {
+      key: string,
+      downloadData: {
+        date: string;
+        count: number;
+      }[];
+      logoUrl: string;
+    }
+  >;
   chartData: XYChartData | undefined;
+  downloadChartData: XYChartData | undefined;
   isGeneratingImage: boolean;
   showSetTokenDialog: boolean;
   showGenEmbedCodeDialog: boolean;
   showEmbedChartGuideDialog: boolean;
   predictData: "Predict" | "Regular";
   predictedRecords: {date: string, count:number}[];
+  predictedDownloadRecords: [{}] | DownloadRecord[],
 }
 
 const state = reactive<State>({
   chartMode: "Date",
   repoCacheMap: new Map(),
+  downloadRepoCacheMap: new Map(),
   chartData: undefined,
+  downloadChartData: undefined,
   isGeneratingImage: false,
   showSetTokenDialog: false,
   showGenEmbedCodeDialog: false,
   showEmbedChartGuideDialog: false,
   predictData: "Regular",
   predictedRecords: [{date: "", count:0}],
+  predictedDownloadRecords: [{date: "", count:0}],
 });
 const store = useAppStore();
 
@@ -220,33 +245,106 @@ const chartMode = computed(() => {
 onMounted(() => {
   if (store.org.length > 0) {
     fetchReposData(store.org);
+    fetchDownloadReposData(store.org);
   }
 });
-
-// When repo is added to store, this is triggered
-// watch(
-//   () => store.org,
-//   () => {
-//     fetchReposData(store.org);
-//   }
-// );
 
 //change to when button is toggled
 watch(
   () => store.org,
   () => {
     fetchReposData(store.org);
+    fetchDownloadReposData(store.org);
   }
 );
 
 
 
+//Function to convert repo Download Data to chart data
+const fetchDownloadReposData = async (org: string[]) => {
+  console.log("Organizations: ", org);
+  console.log("State - Download Repo Cache map: ", state.downloadRepoCacheMap);
+  store.setIsFetching(true);
+  const notCachedOrgs: string[] = [];
+  let data: RepoDownloadData[];
+
+  for (const orgName of org) {
+    const cachedOrg = state.downloadRepoCacheMap.get(orgName);
+    console.log("Cached org: ", cachedOrg);
+
+    if (!cachedOrg || state.predictData=="Predict" || state.predictData=="Regular") {
+      notCachedOrgs.push(orgName);
+    }
+  }
+
+  console.log("Not cached org: ", notCachedOrgs);
+  try {
+    data = await getRepoDownloadData(notCachedOrgs, store.token);
+    console.log("Repo fetched data: ", data);
+  
+    for (let { repo, downloadRecords, logoUrl } of data) {
+      console.log("Org name: ", repo, " has ", downloadRecords);
+    
+      //TimeGPT logic - toggle only when flag is true
+      if (state.predictData=="Predict"){
+        let predictedDownloadRecords: DownloadRecord[] = downloadRecords;
+        predictedDownloadRecords = await getPredictDownloadData(downloadRecords);
+        state.predictedDownloadRecords = predictedDownloadRecords;
+      }
+      else{
+        state.predictedDownloadRecords = downloadRecords;
+      }
+
+      console.log("Chosen state for the records - ", state.predictedDownloadRecords);
+      
+      
+      state.downloadRepoCacheMap.set( repo, {
+        key: repo,
+        downloadData: state.predictedDownloadRecords,
+        logoUrl: logoUrl,
+      });
+    }
+    console.log("Download Repo Cache map: ", state.downloadRepoCacheMap);
+  } catch (error: any) {
+    toast.warn(error.message);
+
+    if (error.status === 401 || error.status === 403) {
+      state.showSetTokenDialog = true;
+    } else if (error.status === 404 || error.status === 501) {
+      store.delOrg(error.repo);
+    }
+  }
+  
+
+  let repoData: RepoDownloadData[] = [];
+  for (const orgName of org) {
+    const cachedOrg = state.downloadRepoCacheMap.get(orgName);
+    console.log(cachedOrg);
+    if (cachedOrg) {
+      console.log("Came in Download cachedrepo loop");
+      repoData.push( 
+      {
+        repo: cachedOrg.key,
+        downloadRecords: cachedOrg.downloadData,
+        logoUrl: cachedOrg.logoUrl
+      });
+    }
+  }
+  
+  if (!repoData) {
+    state.downloadChartData = undefined;
+  } else {
+
+    state.downloadChartData = convertDataToDownloadChartData(repoData, chartMode.value);
+    console.log("Download Data state: ", state.downloadChartData);
+  }
+  // store.setIsFetching(false);
+};
+
 //Main function to convert repo Data to chart data
 const fetchReposData = async (org: string[]) => {
   console.log("Organizations: ", org);
   console.log("State - repo Cache map: ", state.repoCacheMap);
-  // state.repoCacheMap.clear();
-  // console.log(org);
   store.setIsFetching(true);
   const notCachedOrgs: string[] = [];
   let data: any;
@@ -263,53 +361,16 @@ const fetchReposData = async (org: string[]) => {
   console.log("Not cached org: ", notCachedOrgs);
   try {
     data = await getRepoData(notCachedOrgs, store.token);
-    console.log("Data: ", data);
+    console.log("Repo fetched data: ", data);
     for (let { repo, starRecords, logoUrl } of data) {
       console.log("Org name: ", repo, " has ", starRecords);
       
       
     
-      // if button clicked : predictedStarRecords, else: starRecords
+      //TimeGPT logic - toggle only when flag is true
       if (state.predictData=="Predict"){
-        //TimeGPT logic - toggle only when flag is true
-      let predictSummedCounts: {[key: string]: number} = {};
-      let star:any = 0;
-      for (star in starRecords ){
-        const month = new Date(starRecords[star]["date"]).getMonth() + 1;
-        const year = new Date(starRecords[star]["date"]).getFullYear();
-        const day = "15";
-        const predictDate = year.toString() + "-" + month.toString() + "-" + day;
-
-        predictSummedCounts[predictDate] = starRecords[star]["count"];
-      }
-      console.log("Predict Temp Summed counts: ", predictSummedCounts);
-
-
-
-      let predictedData = await api.predictData(predictSummedCounts);
-      console.log("Predicted Data from TimeGPT: ", predictedData.data["timestamp"]);
-
-      let index:any = starRecords.length;
-      let predictedStarRecords = starRecords;
-      for(const data in predictedData.data["timestamp"]){
-        console.log(data);
-        const month = new Date(predictedData.data["timestamp"][data]).getMonth() + 1;
-        console.log(month);
-        const year = new Date(predictedData.data["timestamp"][data]).getFullYear();
-        const newPredictDate = year.toString() + "/" + month.toString();
-        // console.log(predictedData.data["value"]);
-
-        console.log("Star records prev value: ", predictedStarRecords[index-1]);
-        predictedStarRecords[index] = {date: "", count: 0}
-        // starRecords[index] = {date: newPredictDate, count: predictedData.data["count"][data]};
-        console.log("Star records new value: ", predictedStarRecords[index]);
-        predictedStarRecords[index]["date"] = newPredictDate; 
-        predictedStarRecords[index]["count"] = predictedData.data["value"][data];
-        console.log("Star records updated  value: ", predictedStarRecords[index]);
-        index += 1;
-      }
-
-      console.log("New Predicted Star Records from TimeGPT: ", predictedStarRecords);
+        let predictedStarRecords = starRecords;
+        predictedStarRecords = await getPredictData(starRecords);
         state.predictedRecords = predictedStarRecords;
       }
       else{
@@ -353,11 +414,6 @@ const fetchReposData = async (org: string[]) => {
       });
     }
   }
-
-
-  
-  // console.log("Final repo data for charting: ", );
-  // {(repoData[0]["starRecords"][0]["date"]) : (repoData[0]["starRecords"][0]["count"])} 
   
   if (!repoData) {
     state.chartData = undefined;

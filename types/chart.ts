@@ -13,3 +13,17 @@ export interface RepoStarData {
 export interface RepoData extends RepoStarData {
   logoUrl: string;
 }
+
+export interface DownloadRecord {
+  date: string;
+  count: number;
+}
+
+export interface DownloadData {
+  repo: string;
+  downloadRecords: DownloadRecord[];
+}
+
+export interface RepoDownloadData extends DownloadData {
+  logoUrl: string;
+}
