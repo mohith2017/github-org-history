@@ -315,7 +315,21 @@ const XYChart = (
         const xyGroupIndex = Number(
           select(nodes[i].parentElement).attr("xy-group-index")
         );
-        return options.dataColors[xyGroupIndex];
+
+        console.log("Nodes value: ", nodes[0]["__data__"]);
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth() + 1;
+
+        let color = options.dataColors[xyGroupIndex];
+        console.log("Current year: ", currentYear, "and current month: ", currentMonth);
+
+        const dateVal = new Date(nodes[i]["__data__"]["x"]["$d"]);
+        if (dateVal.getFullYear() == currentYear && (dateVal.getMonth()+1) > currentMonth ){
+          color = "#301934";
+        }
+
+        // return options.dataColors[xyGroupIndex];
+        return color;
       })
       .style("fill", (_, i, nodes) => {
         const xyGroupIndex = Number(
