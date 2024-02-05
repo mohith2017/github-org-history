@@ -194,7 +194,7 @@ export const getRepoData = async (
     //Org repo names
     let reposStarData: RepoData[] = [];
     console.log("Org initial value: ", repo);
-    let repoNames = await api.getOrgRepos(repo);
+    let repoNames = await api.getOrgRepos(repo, token);
     console.log("Repo direct names: ", repoNames);
 
     // Python packages logic
@@ -396,7 +396,7 @@ export const getRepoDownloadData = async (
     //Org repo names
     let reposDownloadData: RepoDownloadData[] = [];
     console.log("Org initial value: ", repo);
-    let repoNames = await api.getOrgRepos(repo);
+    let repoNames = await api.getOrgRepos(repo, token);
     console.log("Repo direct names: ", repoNames);
 
     // Python packages logic

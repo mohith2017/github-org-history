@@ -9,7 +9,8 @@ const DEFAULT_PER_PAGE = 30;
 
 namespace api {
   export async function getOrgRepos(
-    org: string
+    org: string,
+    token?: string,
   ): Promise<string[]> {
   //   let repoNames: string[];
   //   let url = `https://api.github.com/orgs/${org}/repos`;
@@ -35,7 +36,12 @@ namespace api {
   try {
   let currentPageUrl = url; // Start with the initial URL
   while (currentPageUrl) {
-      const response = await axios.get(currentPageUrl);
+      const response = await axios.get(currentPageUrl, {
+        headers: {
+          Accept: "application/vnd.github.v3.star+json",
+          Authorization: token ? `token ${token}` : "",
+        },
+      });
       const data = response.data;
       console.log("Data response:", data);
       repoNames = repoNames.concat(data.map((repo: any) => repo.name));
