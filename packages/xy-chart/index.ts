@@ -316,7 +316,7 @@ const XYChart = (
           select(nodes[i].parentElement).attr("xy-group-index")
         );
 
-        console.log("Nodes value: ", nodes[0]["__data__"]);
+        // console.log("Nodes value: ", nodes[0]["__data__"]);
         const currentYear = new Date().getFullYear();
         const currentMonth = new Date().getMonth() + 1;
 
@@ -324,7 +324,8 @@ const XYChart = (
         console.log("Current year: ", currentYear, "and current month: ", currentMonth);
 
         const dateVal = new Date(nodes[i]["__data__"]["x"]["$d"]);
-        if (dateVal.getFullYear() == currentYear && (dateVal.getMonth()+1) > currentMonth ){
+        if ((dateVal.getFullYear() == currentYear && (dateVal.getMonth()+1) > currentMonth) || 
+        (dateVal.getFullYear() > currentYear && (dateVal.getMonth()+1) >= currentMonth)){
           color = "#301934";
         }
 

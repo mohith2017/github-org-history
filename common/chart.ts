@@ -186,12 +186,13 @@ export const getRepoData = async (
   > = new Map();
 
   console.log("Repos input value: ", repos);
-  let reposStarData: RepoData[] = [];
+  
 
 
 
   for (const repo of repos) {
     //Org repo names
+    let reposStarData: RepoData[] = [];
     console.log("Org initial value: ", repo);
     let repoNames = await api.getOrgRepos(repo);
     console.log("Repo direct names: ", repoNames);
@@ -274,57 +275,59 @@ export const getRepoData = async (
     }
    }
 
-   
-  console.log("Repo star data: " , reposStarData);
-  console.log("Repo star data type: ", typeof reposStarData);
+    
+    console.log("Repo star data: " , reposStarData);
+    console.log("Repo star data type: ", typeof reposStarData);
 
 
-   //New logic - Before coming to this part, first make every value within a repositories star count = value - prevValue(increase from previous star value)
-   // Then while going through each repo - isolate all of the objects and add it to another object.
-   // sort it
-   // incrementally add from one date to the next till it reaches the last, by adding its previous object's count value
+    //New logic - Before coming to this part, first make every value within a repositories star count = value - prevValue(increase from previous star value)
+    // Then while going through each repo - isolate all of the objects and add it to another object.
+    // sort it
+    // incrementally add from one date to the next till it reaches the last, by adding its previous object's count value
 
-  // Step 1: Flatten the array
-  let flatArray = reposStarData.flatMap(repo => 
-    repo.starRecords.map(record => ({date: record.date, count: record.count}))
-  );
-  console.log("Flat array: ", flatArray);
-  
-  // Step 2: Sort the array by date
-  flatArray.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  console.log("Sorted Flat array: ", flatArray);
+    // Step 1: Flatten the array
+    let flatArray: {date:string, count:number}[] = [];
+    flatArray = reposStarData.flatMap(repo => 
+      repo.starRecords.map(record => ({date: record.date, count: record.count}))
+    );
+    console.log("Flat array: ", flatArray);
+    
+    // Step 2: Sort the array by date
+    flatArray.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    console.log("Sorted Flat array: ", flatArray);
 
 
-  let tempSummedCounts: {} = {};
-  let prevCount = 0;
-  console.log("Flat array first value: ", flatArray[0]);
-  for (let i = 0; i<flatArray.length; i++ ){
-    const month = new Date(flatArray[i]["date"]).getMonth() + 1;
-    console.log("Month: ", month);
-    const year = new Date(flatArray[i]["date"]).getFullYear();
-    const day = new Date(flatArray[i]["date"]).getDay();
-    const date = year.toString() + "/" + month.toString();
+    let tempSummedCounts: {} = {};
+    let prevCount = 0;
+    console.log("Flat array first value: ", flatArray[0]);
+    for (let i = 0; i<flatArray.length; i++ ){
+      const month = new Date(flatArray[i]["date"]).getMonth() + 1;
+      console.log("Month: ", month);
+      const year = new Date(flatArray[i]["date"]).getFullYear();
+      const day = new Date(flatArray[i]["date"]).getDay();
+      const date = year.toString() + "/" + month.toString();
 
-    if (date in tempSummedCounts){
-      tempSummedCounts[date] += flatArray[i]["count"];
+      if (date in tempSummedCounts){
+        tempSummedCounts[date] += flatArray[i]["count"];
+      }
+      else{
+        tempSummedCounts[date] = flatArray[i]["count"] + prevCount;
+      }
+
+      prevCount = tempSummedCounts[date];
     }
-    else{
-      tempSummedCounts[date] = flatArray[i]["count"] + prevCount;
-    }
+    console.log("Temp Summed counts: ", tempSummedCounts);
 
-    prevCount = tempSummedCounts[date];
-  }
-  console.log("Temp Summed counts: ", tempSummedCounts);
+    const transformObject = obj => {
+    return Object.entries(obj)
+      .map(([date, count]) => ({ date, count }));
+    };
+    const summedCounts = transformObject(tempSummedCounts);
+    console.log("Summed counts: ", summedCounts);
 
-  const transformObject = obj => {
-   return Object.entries(obj)
-    .map(([date, count]) => ({ date, count }));
-  };
-  const summedCounts = transformObject(tempSummedCounts);
-  console.log("Summed counts: ", summedCounts);
-
-  repoDataCacheMap.set(repo, { orgName: repo, star: summedCounts, logo: reposStarData[0]["logoUrl"] });
-
+    if(summedCounts.length <= 0){ continue; }
+    repoDataCacheMap.set(repo, { orgName: repo, star: summedCounts, logo: reposStarData[0]["logoUrl"] });
+    console.log("Repo Data cache map: ", repoDataCacheMap);
   
 
   }
@@ -376,7 +379,7 @@ export const getRepoDownloadData = async (
   token = "",
   maxRequestAmount = DEFAULT_MAX_REQUEST_AMOUNT
 ): Promise<RepoDownloadData[]> => {
-  const repoDataCacheMap: Map<
+  const repoDownloadDataCacheMap: Map<
     string,
     {
       orgName: string;
@@ -386,11 +389,12 @@ export const getRepoDownloadData = async (
   > = new Map();
 
   console.log("Repos for download input value: ", repos);
-  let reposDownloadData: RepoDownloadData[] = [];
+  
   let downloadData: DownloadRecord;
 
   for (const repo of repos) {
     //Org repo names
+    let reposDownloadData: RepoDownloadData[] = [];
     console.log("Org initial value: ", repo);
     let repoNames = await api.getOrgRepos(repo);
     console.log("Repo direct names: ", repoNames);
@@ -407,37 +411,23 @@ export const getRepoDownloadData = async (
 
         
         for(let value in data["downloads"]){
-          const version = data["versions"][0];
+          // const version = data["versions"][0];
+          const version = data["versions"];
           // console.log("At date: ", value, " versions are: ") 
-          for (const counts in data["downloads"][value]){
-            // console.log("Version: ", counts);
+          let count = 0;
+          
+          for (const v in version){
+            // console.log("Data count at version: ", data["downloads"][value][data["versions"][v]]);
+            if (data["downloads"][value][data["versions"][v]]){
+              count += data["downloads"][value][data["versions"][v]];  
+            }
           }
-          if (data["downloads"][value][version]){
-            const count = data["downloads"][value][version];
-            // console.log("At date: ", value, " , count to be pushed: ", count);
             output.push({
               date: value,
               count: count,
             });
-            // console.log("Chosen value: ", output);
-          }
-          
-          // else{
-          //   let n = 0;
-          //   while(!data["downloads"][value][data["versions"][n]]){
-          //    n += 1; 
-          //   }
-  
-            
-          //   output.push({
-          //     date: value,
-          //     count: data["downloads"][value][data["versions"][n]],
-          //   });
-          //   console.log("Chosen value: ", output);
-          // }
         }
        
-
         reposDownloadData.push({repo: subrepo, logoUrl: logo, downloadRecords: output});
         
         // store.setDownloadData(downloadData);
@@ -498,15 +488,18 @@ export const getRepoDownloadData = async (
   const summedCounts = transformObject(tempSummedCounts);
   console.log("Downloads Summed counts: ", summedCounts);
 
-  repoDataCacheMap.set(repo, { orgName: repo, downloadRecords: summedCounts, logo: reposDownloadData[0]["logoUrl"] });
+  if(summedCounts.length <= 0){ continue; }
 
-  
+  repoDownloadDataCacheMap.set(repo, { orgName: repo, downloadRecords: summedCounts, logo: reposDownloadData[0]["logoUrl"] });
+  console.log("Download Repo data cache map 1: ", repoDownloadDataCacheMap);
 
   }
 
+  console.log("Download Repo data cache map: ", repoDownloadDataCacheMap);
+
   let finalreposDownloadData: RepoDownloadData[] = [];
   for (const repo of repos) {
-    const records = repoDataCacheMap.get(repo);
+    const records = repoDownloadDataCacheMap.get(repo);
     if (records) {
       console.log("Records exist");
       finalreposDownloadData.push({
