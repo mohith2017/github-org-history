@@ -11,22 +11,47 @@ namespace api {
   export async function getOrgRepos(
     org: string
   ): Promise<string[]> {
-    let repoNames: string[];
-    let url = `https://api.github.com/orgs/${org}/repos`;
-    console.log("URL for fetching repos: ", url);
+  //   let repoNames: string[];
+  //   let url = `https://api.github.com/orgs/${org}/repos`;
+  //   console.log("URL for fetching repos: ", url);
     
 
-    try {
-      const response = await axios.get(url);
-      const data = response.data;
-      repoNames = data.map((repo: any) => repo.name);
-      console.log(repoNames);
-   } catch (error) {
-      console.log(`Failed to fetch repos: ${error}`);
-      return [];
-   }
+  //   try {
+  //     const response = await axios.get(url);
+  //     const data = response.data;
+  //     console.log("Data response:", data);
+  //     repoNames = data.map((repo: any) => repo.name);
+  //     console.log(repoNames);
+  //  } catch (error) {
+  //     console.log(`Failed to fetch repos: ${error}`);
+  //     return [];
+  //  }
 
-    return repoNames;
+  //   return repoNames;
+  let repoNames: string[] = [];
+  let url = `https://api.github.com/orgs/${org}/repos`;
+  console.log("URL for fetching repos: ", url);
+
+  try {
+  let currentPageUrl = url; // Start with the initial URL
+  while (currentPageUrl) {
+      const response = await axios.get(currentPageUrl);
+      const data = response.data;
+      console.log("Data response:", data);
+      repoNames = repoNames.concat(data.map((repo: any) => repo.name));
+      
+      // Extract the 'next' link from the Link header
+      const linkHeader = response.headers.link;
+      const nextLinkMatch = linkHeader && linkHeader.match(/<([^>]+)>;\s*rel="next"/);
+      currentPageUrl = nextLinkMatch ? nextLinkMatch[1] : null;
+  }
+  } catch (error) {
+  console.log(`Failed to fetch repos: ${error}`);
+  return [];
+  }
+
+  return repoNames;
+
   }
 
   export async function getDownloadData(
